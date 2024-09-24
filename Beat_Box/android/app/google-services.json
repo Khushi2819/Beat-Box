@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "530856763379",
-    "project_id": "beat-14495",
-    "storage_bucket": "beat-14495.appspot.com"
+    "project_number": "940693288527",
+    "project_id": "beat-e7c20",
+    "storage_bucket": "beat-e7c20.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:530856763379:android:dbf781a7ab9b563a55fc86",
+        "mobilesdk_app_id": "1:940693288527:android:32e03dd766cbb843515c3a",
         "android_client_info": {
           "package_name": "com.example.beatbox"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBiw0LPt802a4ymLHrgl-PhmWj9Gr-M8bo"
+          "current_key": "AIzaSyCGmtnQFnaQR1yWcqNKXKk747KDDrKR53M"
         }
       ],
       "services": {
