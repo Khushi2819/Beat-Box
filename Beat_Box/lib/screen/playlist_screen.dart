@@ -1,78 +1,114 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 import '../models/playlist_model.dart';
 import '../models/song_model.dart';
 
-class PlaylistScreen extends StatelessWidget{
+class PlaylistScreen extends StatelessWidget {
   const PlaylistScreen({Key? key}) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
-    List<Song> songs = Song.songs;
-    Playlist playlist = Playlist.playlists[0];
-    
     return Container(
-        decoration: BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Colors.deepPurple.shade800.withOpacity(0.8),
-          Colors.deepPurple.shade200.withOpacity(0.8),
-        ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.deepPurple.shade800.withOpacity(0.8),
+            Colors.deepPurple.shade200.withOpacity(0.8),
+          ],
         ),
       ),
-      
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
-          elevation: 0, 
+          elevation: 0,
           title: const Text('Playlist'),
         ),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              children: [
-                _PlaylistInformation(playlist: playlist),
-                const SizedBox(height: 30),
-                const _PlayOrShuffleSwitch(),
-                _PlaylistSongs(playlist: playlist),
-              ],
-            ),
-          ),
+        body: FutureBuilder<List<Playlist>>(
+          future: fetchPlaylists(), // Fetch playlists from Firestore
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(child: Text('No Playlists Available'));
+            }
+
+            List<Playlist> playlists = snapshot.data!;
+
+            return SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  children: playlists.map((playlist) {
+                    return Column(
+                      children: [
+                        _PlaylistInformation(playlist: playlist),
+                        const SizedBox(height: 30),
+                        const _PlayOrShuffleSwitch(),
+                        _PlaylistSongs(playlist: playlist),
+                        const SizedBox(height: 30),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
   }
+
+  Future<List<Playlist>> fetchPlaylists() async {
+    List<Playlist> playlists = [];
+    final snapshot = await FirebaseFirestore.instance.collection('playlists').get();
+
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      final title = data['title'] ?? '';
+      final imageUrl = data['imageUrl'] ?? '';
+
+      // Assuming songs is a list of maps in Firestore
+      List<Song> songs = (data['songs'] as List).map((songData) {
+        return Song.fromMap(songData);
+      }).toList();
+
+      playlists.add(Playlist(title: title, songs: songs, imageUrl: imageUrl));
+    }
+    return playlists;
+  }
 }
-class _PlaylistSongs extends StatelessWidget{
+
+class _PlaylistSongs extends StatelessWidget {
   const _PlaylistSongs({
     Key? key,
     required this.playlist,
   }) : super(key: key);
+
   final Playlist playlist;
+
   @override
-  Widget build(BuildContext context)
-  {
+  Widget build(BuildContext context) {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: playlist.songs.length,
-      itemBuilder: (context,index){
+      itemBuilder: (context, index) {
         return ListTile(
           leading: Text(
-            '${index +1}',
-            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                fontWeight: FontWeight.bold),
+            '${index + 1}',
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
           ),
           title: Text(
             playlist.songs[index].title,
-            style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
           ),
-          subtitle:Text('${playlist.songs[index].description}'),
+          subtitle: Text('${playlist.songs[index].description}'),
           trailing: const Icon(
             Icons.more_vert,
             color: Colors.white,
@@ -81,18 +117,15 @@ class _PlaylistSongs extends StatelessWidget{
       },
     );
   }
-
 }
-
 class _PlayOrShuffleSwitch extends StatefulWidget{
   const _PlayOrShuffleSwitch({
     Key? key,
-}) : super(key: key);
+  }) : super(key: key);
 
   @override
   State<_PlayOrShuffleSwitch> createState() => _PlayOrShuffleSwitchState();
 }
-
 class _PlayOrShuffleSwitchState extends State<_PlayOrShuffleSwitch> {
   bool isPlay = true;
 
@@ -116,42 +149,42 @@ class _PlayOrShuffleSwitchState extends State<_PlayOrShuffleSwitch> {
 
         child: Stack(
           children: [
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 200),
-            left: isPlay ? 0 : width * 0.45,
-            child: Container(
-            height: 50,
-            width: width * 0.45,
-            decoration: BoxDecoration(
-              color: Colors.deepPurple.shade400,
-              borderRadius: BorderRadius.circular(15),
-            ),
-            ),
-          ),
-            Row(
-            children: [
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Center(
-                      child: Text(
-                        'Play',
-                        style: TextStyle(
-                          color: isPlay ? Colors.white : Colors.deepPurple,
-                          fontSize: 17,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Icon(
-                      Icons.play_circle,
-                      color: isPlay ? Colors.white : Colors.deepPurple,
-                    ),
-                  ],
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 200),
+              left: isPlay ? 0 : width * 0.45,
+              child: Container(
+                height: 50,
+                width: width * 0.45,
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple.shade400,
+                  borderRadius: BorderRadius.circular(15),
                 ),
               ),
-              Expanded(
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Center(
+                        child: Text(
+                          'Play',
+                          style: TextStyle(
+                            color: isPlay ? Colors.white : Colors.deepPurple,
+                            fontSize: 17,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Icon(
+                        Icons.play_circle,
+                        color: isPlay ? Colors.white : Colors.deepPurple,
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -171,20 +204,19 @@ class _PlayOrShuffleSwitchState extends State<_PlayOrShuffleSwitch> {
                       ),
                     ],
                   ),
-              ),
-            ],
-          ),],
+                ),
+              ],
+            ),],
         ),
       ),
     );
   }
 }
-
 class _PlaylistInformation extends StatelessWidget{
   const _PlaylistInformation({
     Key? key,
     required this.playlist,
-}) : super(key: key);
+  }) : super(key: key);
   final Playlist playlist;
   @override
   Widget build(BuildContext context){
@@ -211,3 +243,5 @@ class _PlaylistInformation extends StatelessWidget{
     );
   }
 }
+
+// Other widget classes (_PlayOrShuffleSwitch, _PlaylistInformation) remain the same

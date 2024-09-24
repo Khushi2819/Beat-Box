@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/song_model.dart';
 import 'home_screen.dart'; // Import HomeScreen
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'library.dart';
 
 class TrendingMusicScreen extends StatefulWidget {
   const TrendingMusicScreen({Key? key}) : super(key: key);
@@ -11,22 +14,53 @@ class TrendingMusicScreen extends StatefulWidget {
 }
 
 class _TrendingMusicScreenState extends State<TrendingMusicScreen> {
-  List<Song> songs = Song.songs;
+  List<Song> songs = [];
   List<Song> filteredSongs = [];
+
+  Future<List<Song>> fetchSongs() async {
+    List<Song> songList = [];
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    print(1);
+    try {
+      // Get the songs collection
+      QuerySnapshot snapshot = await firestore.collection('songs').get();
+      // Map each document to the Song model
+      for (var doc in snapshot.docs) {
+        print(doc);
+        Song song = Song(
+          title: doc['title'],
+          description: doc['description'] ?? "hii",
+          url: doc['url'],
+          coverUrl: doc['coverUrl'],
+        );
+        songList.add(song);
+      }
+    } catch (e) {
+      print('Error fetching songs: $e');
+    }
+    print(songList);
+    return songList;
+  }
+
+  Future<void> loadSongs() async {
+    songs = await fetchSongs(); // Wait for the fetch to complete
+    setState(() {
+      filteredSongs = songs; // Update filteredSongs here
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    filteredSongs = songs;
+    loadSongs(); // Call to load songs
   }
 
   void _filterSongs(String query) {
     setState(() {
-      filteredSongs = songs
-          .where((song) =>
+      filteredSongs = songs.where((song) =>
       song.title.toLowerCase().contains(query.toLowerCase()) ||
-          song.description.toLowerCase().contains(query.toLowerCase()))
-          .toList();
+          song.description.toLowerCase().contains(query.toLowerCase())
+      ).toList();
     });
   }
 
@@ -55,10 +89,20 @@ class _TrendingMusicScreenState extends State<TrendingMusicScreen> {
           showUnselectedLabels: false,
           currentIndex: 1, // Highlight the "Search" button
           onTap: (index) {
-            if (index == 0) {
-              Get.off(() => const HomeScreen()); // Navigate to HomeScreen and replace the current route
+            switch (index) {
+              case 0:
+                Get.to(() => const HomeScreen());
+                break;
+              case 1:
+                Get.to(() => const TrendingMusicScreen()); // Navigate to TrendingMusicScreen
+                break;
+              case 2:
+                Get.to(() => const UserPlaylistScreen()); // Navigate to UserPlaylistScreen
+                break;
+              case 3:
+              // Handle Profile navigation
+                break;
             }
-            // Handle other navigation if needed
           },
           items: const [
             BottomNavigationBarItem(
@@ -130,8 +174,8 @@ class _TrendingMusicScreenState extends State<TrendingMusicScreen> {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(15.0),
-                            child: Image.asset(
-                              filteredSongs[index].coverUrl,
+                            child: Image.network(
+                              filteredSongs[index].coverUrl, // Use Image.network for URLs
                               height: 75,
                               width: 75,
                               fit: BoxFit.cover,
@@ -195,7 +239,7 @@ class _CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      leading: const Icon(Icons.grid_view_rounded,color: Colors.white,),
+      leading: const Icon(Icons.grid_view_rounded, color: Colors.white),
       actions: [
         Container(
           margin: const EdgeInsets.only(right: 20),

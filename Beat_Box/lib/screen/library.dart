@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../models/MusicCollection.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Cloud Firestore
 import '../models/Playlist_Controller.dart';
-import '../models/song_model.dart';
+import '../models/song_model.dart'; // Import the Song model
 import 'TrendingMusicScreen.dart';
 import 'home_screen.dart';
 
@@ -15,23 +15,64 @@ class UserPlaylistScreen extends StatefulWidget {
 
 class _UserPlaylistScreenState extends State<UserPlaylistScreen> {
   final PlaylistController playlistController = Get.put(PlaylistController());
+  final FirebaseFirestore _db = FirebaseFirestore.instance; // Firestore instance
 
-
-  List<MusicCollection> userPlaylists = []; // Updated to use MusicCollection
+  List<Map<String, dynamic>> userPlaylists = []; // Directly using a list of maps for playlists
   final TextEditingController _playlistNameController = TextEditingController();
 
   // Variable to track selected index in BottomNavigationBar
   int _selectedIndex = 2; // Set default to "Play" (Library) index (2)
 
-  // Method to create a new playlist and add to the list
-  void _createPlaylist(String name) {
-    setState(() {
-      userPlaylists.add(
-        MusicCollection(title: name, songs: [], imageUrl: ''), // Updated model
-      );
-    });
-    _playlistNameController.clear();
-    Get.back();
+  @override
+  void initState() {
+    super.initState();
+    _fetchPlaylists(); // Fetch playlists when the screen is initialized
+  }
+
+  // Method to fetch playlists from Firestore
+  Future<void> _fetchPlaylists() async {
+    try {
+      QuerySnapshot snapshot = await _db.collection('playlists').get();
+      setState(() {
+        userPlaylists = snapshot.docs.map((doc) {
+          Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+          return {
+            'title': data['title'],
+            'songs': (data['songs'] as List<dynamic>).map((song) {
+              // Ensure each song is properly converted to a Song object
+              return Song.fromMap(song as Map<String, dynamic>);
+            }).toList(),
+            'imageUrl': data['imageUrl'],
+          };
+        }).toList();
+      });
+    } catch (e) {
+      print("Error fetching playlists: $e");
+    }
+  }
+
+  // Method to create a new playlist and add to Firestore
+  Future<void> _createPlaylist(String name) async {
+    try {
+      DocumentReference newPlaylistRef = await _db.collection('playlists').add({
+        'title': name,
+        'songs': [], // Initially empty
+        'imageUrl': '', // Initially empty
+      });
+
+      // Update local list with the new playlist
+      setState(() {
+        userPlaylists.add({
+          'title': name,
+          'songs': [], // Initially empty
+          'imageUrl': '', // Initially empty
+        });
+      });
+      _playlistNameController.clear();
+      Get.back();
+    } catch (e) {
+      print("Error creating playlist: $e");
+    }
   }
 
   // Dialog to create a new playlist
@@ -70,15 +111,6 @@ class _UserPlaylistScreenState extends State<UserPlaylistScreen> {
         ],
       ),
     );
-  }
-
-  // Method to add a song to a playlist and update the playlist cover image
-  void _addSongToPlaylist(MusicCollection playlist, Song song) {
-    setState(() {
-      playlist.songs.add(song);
-      // Update the image to the first song's coverUrl if songs exist
-      playlist.imageUrl = playlist.songs.isNotEmpty ? playlist.songs.first.coverUrl : '';
-    });
   }
 
   // Function to handle BottomNavigationBar item taps
@@ -135,7 +167,6 @@ class _UserPlaylistScreenState extends State<UserPlaylistScreen> {
             ),
           ],
         ),
-
         body: userPlaylists.isEmpty
             ? const Center(
           child: Text(
@@ -152,7 +183,7 @@ class _UserPlaylistScreenState extends State<UserPlaylistScreen> {
               onTap: () {
                 // Add logic to navigate to playlist details or add songs
               },
-              child: CardPlay(playlist: playlist), // Display each playlist using the PlaylistCard widget
+              child: CardPlay(playlist: playlist), // Display each playlist using the CardPlay widget
             );
           },
         ),
@@ -190,7 +221,7 @@ class _UserPlaylistScreenState extends State<UserPlaylistScreen> {
 }
 
 class CardPlay extends StatelessWidget {
-  final MusicCollection playlist;
+  final Map<String, dynamic> playlist; // Changed to a map
 
   const CardPlay({
     Key? key,
@@ -203,14 +234,14 @@ class CardPlay extends StatelessWidget {
       elevation: 5,
       margin: const EdgeInsets.symmetric(vertical: 10.0),
       child: ListTile(
-        leading: playlist.imageUrl.isNotEmpty
-            ? Image.asset(playlist.imageUrl, fit: BoxFit.cover, width: 50, height: 50)
+        leading: playlist['imageUrl'].isNotEmpty
+            ? Image.asset(playlist['imageUrl'], fit: BoxFit.cover, width: 50, height: 50)
             : const Icon(Icons.music_note, size: 50), // Placeholder icon if no image
         title: Text(
-          playlist.title,
+          playlist['title'],
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        subtitle: Text('${playlist.songs.length} songs'), // Display number of songs
+        subtitle: Text('${(playlist['songs'] as List<Song>).length} songs'), // Display number of songs
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
           // You can add a function to navigate to the playlist's detail page here

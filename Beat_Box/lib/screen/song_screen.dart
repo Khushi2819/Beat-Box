@@ -8,44 +8,44 @@ import '../widget/seekbar.dart';
 import 'package:get/get.dart';
 import 'package:rxdart/rxdart.dart' as rxdart;
 
-
 class SongScreen extends StatefulWidget {
   const SongScreen({Key? key}) : super(key: key);
-
 
   @override
   State<SongScreen> createState() => _SongScreenState();
 }
 
-
 class _SongScreenState extends State<SongScreen> {
   late AudioPlayer audioPlayer;
   late Song song;
 
-
   @override
   void initState() {
     super.initState();
-    song = Get.arguments ?? Song.songs[0];
+    song = Get.arguments ?? null;
     audioPlayer = AudioPlayer();
     _playSong();
   }
 
-
   Future<void> _playSong() async {
-    await audioPlayer.setAudioSource(
-      AudioSource.uri(
-        Uri.parse('asset:///${song.url}'),
-      ),
-    );
-    audioPlayer.play();
+    try {
+      // Use audio source from the URL instead of assets
+      await audioPlayer.setAudioSource(
+        AudioSource.uri(
+          Uri.parse(song.url), // Assume song.url contains the audio URL
+        ),
+      );
+      audioPlayer.play();
+    } catch (e) {
+      print('Error playing song: $e');
+    }
   }
+
   @override
   void dispose() {
     audioPlayer.dispose();
     super.dispose();
   }
-
 
   Stream<SeekBarData> get _seekBarDataStream =>
       rxdart.Rx.combineLatest2<Duration, Duration?, SeekBarData>(
@@ -55,7 +55,6 @@ class _SongScreenState extends State<SongScreen> {
           return SeekBarData(position, duration ?? Duration.zero);
         },
       );
-
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +94,7 @@ class _SongScreenState extends State<SongScreen> {
                     width: double.infinity * 0.8, // Adjust the width here
                     decoration: BoxDecoration(
                       image: DecorationImage(
-                        image: AssetImage(song.coverUrl),
+                        image: NetworkImage(song.coverUrl), // Load cover image from assets
                         fit: BoxFit.cover,
                       ),
                       borderRadius: BorderRadius.circular(12), // Adds rounded corners to the image
@@ -118,7 +117,6 @@ class _SongScreenState extends State<SongScreen> {
   }
 }
 
-
 class _MusicPlayer extends StatelessWidget {
   const _MusicPlayer({
     Key? key,
@@ -128,11 +126,9 @@ class _MusicPlayer extends StatelessWidget {
   })  : _seekBarDataStream = seekBarDataStream,
         super(key: key);
 
-
   final Song song;
   final Stream<SeekBarData> _seekBarDataStream;
   final AudioPlayer audioPlayer;
-
 
   @override
   Widget build(BuildContext context) {
@@ -176,15 +172,17 @@ class _MusicPlayer extends StatelessWidget {
               IconButton(
                 icon: Icon(Icons.settings, color: Colors.white),
                 iconSize: 35,
-                onPressed: () {},
+                onPressed: () {
+                  // Implement settings action here
+                },
               ),
               IconButton(
                 icon: Icon(Icons.add_to_photos, color: Colors.white),
                 iconSize: 35,
-                onPressed: () {},
+                onPressed: () {
+                  // Implement add to playlist action here
+                },
               ),
-
-
             ],
           ),
         ],

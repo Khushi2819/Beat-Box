@@ -7,6 +7,8 @@ import '../widget/section_header.dart';
 import '../widget/song_card.dart';
 import 'TrendingMusicScreen.dart';
 import 'library.dart'; // Import the UserPlaylistScreen
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -16,14 +18,46 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Song> songs = Song.songs;
+
+
+  Future<List<Song>> fetchSongs() async {
+    List<Song> songList = [];
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    try {
+      // Get the songs collection
+      QuerySnapshot snapshot = await firestore.collection('songs').get();
+
+      // Map each document to the Song model
+      for (var doc in snapshot.docs) {
+        Song song = Song(
+          title: doc['title'],
+          description: doc['description'],
+          url: doc['url'],
+          coverUrl: doc['coverUrl'],
+        );
+        songList.add(song);
+      }
+    } catch (e) {
+      print('Error fetching songs: $e');
+    }
+    print(songList);
+    return songList;
+  }
+  List<Song> songs = [];
   List<Song> filteredSongs = [];
   String searchQuery = '';
+  Future<void> loadSongs() async {
+    songs = await fetchSongs(); // Wait for the fetch to complete
+    setState(() {
+      filteredSongs = songs; // Update filteredSongs here
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    filteredSongs = songs;
+    loadSongs();
   }
 
   void _filterSongs(String query) {
@@ -177,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             shrinkWrap: true,
                             padding: const EdgeInsets.only(top: 20),
                             physics: const NeverScrollableScrollPhysics(),
-                            itemCount: Playlist.playlists.length,
+                            itemCount: 0,
                             itemBuilder: (context, index) {
                               return PlaylistCard(
                                   playlist: Playlist.playlists[index]);
