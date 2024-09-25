@@ -45,89 +45,120 @@ class _SignupPageState extends State<SignupPage> {
           ),
         ),
         child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // 'BeatBox' Logo on Top
-                  Text(
-                    'BeatBox',
-                    style: Theme.of(context).textTheme.headlineMedium!.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 40, // Increased font size for better visibility
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // 'BeatBox' Logo on Top
+                    Text(
+                      'BeatBox',
+                      style: TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontFamily: 'Raleway', // Custom font (if added to project)
+                        letterSpacing: 2,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 30),
-                  Text('Sign Up', style: Theme.of(context).textTheme.headlineMedium!.copyWith(color: Colors.white)),
-                  const SizedBox(height: 20),
-
-                  // Email Field
-                  TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      filled: true,
-                      fillColor: Colors.white,
+                    const SizedBox(height: 40), // Space below logo
+                    Text(
+                      'Sign Up',
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineMedium!
+                          .copyWith(color: Colors.white),
                     ),
-                    onChanged: (value) => _email = value,
-                    validator: (value) => value!.contains('@') ? null : 'Enter a valid email',
-                    style: const TextStyle(color: Colors.black), // Enhanced readability
-                  ),
-                  const SizedBox(height: 10),
+                    const SizedBox(height: 20),
 
-                  // Password Field
-                  TextFormField(
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      filled: true,
-                      fillColor: Colors.white,
+                    // Email Field
+                    TextFormField(
+                      decoration: InputDecoration(
+                        labelText: 'Email',
+                        labelStyle: const TextStyle(color: Colors.deepPurple),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      onChanged: (value) => _email = value,
+                      validator: (value) =>
+                      value!.contains('@') ? null : 'Enter a valid email',
+                      style: const TextStyle(color: Colors.black),
                     ),
-                    onChanged: (value) => _password = value,
-                    validator: (value) => value!.length >= 6 ? null : 'Password must be at least 6 characters',
-                    style: const TextStyle(color: Colors.black), // Enhanced readability
-                  ),
-                  const SizedBox(height: 10),
+                    const SizedBox(height: 10),
 
-                  // Confirm Password Field
-                  TextFormField(
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Confirm Password',
-                      filled: true,
-                      fillColor: Colors.white,
+                    // Password Field
+                    TextFormField(
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        labelStyle: const TextStyle(color: Colors.deepPurple),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      onChanged: (value) => _password = value,
+                      validator: (value) =>
+                      value!.length >= 6 ? null : 'Password must be at least 6 characters',
+                      style: const TextStyle(color: Colors.black),
                     ),
-                    onChanged: (value) => _confirmPassword = value,
-                    validator: (value) => value == _password ? null : 'Passwords do not match',
-                    style: const TextStyle(color: Colors.black), // Enhanced readability
-                  ),
+                    const SizedBox(height: 10),
 
-                  const SizedBox(height: 20),
-
-                  // Sign Up Button
-                  ElevatedButton(
-                    onPressed: _signup,
-                    child: const Text('Sign Up'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15), // Better button size
+                    // Confirm Password Field
+                    TextFormField(
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'Confirm Password',
+                        labelStyle: const TextStyle(color: Colors.deepPurple),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      onChanged: (value) => _confirmPassword = value,
+                      validator: (value) =>
+                      value == _password ? null : 'Passwords do not match',
+                      style: const TextStyle(color: Colors.black),
                     ),
-                  ),
-                  const SizedBox(height: 10),
+                    const SizedBox(height: 20),
 
-                  // Redirect to Login Button
-                  TextButton(
-                    onPressed: () {
-                      Get.offNamed('/login');
-                    },
-                    child: const Text('Already have an account? Log in'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.white,
+                    // Sign Up Button
+                    ElevatedButton(
+                      onPressed: _signup,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple.shade600,
+                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: const Text(
+                        'Sign Up',
+                        style: TextStyle(color: Colors.white, fontSize: 18),
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 10),
+
+                    // Redirect to Login Button
+                    TextButton(
+                      onPressed: () {
+                        Get.offNamed('/login');
+                      },
+                      child: const Text(
+                        'Already have an account? Log in',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

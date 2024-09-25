@@ -36,8 +36,12 @@ class ProfileScreen extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text('Profile'),
+          title: const Text(
+            'Profile',
+            style: TextStyle(color: Colors.white), // Set title color to white
+          ),
           centerTitle: true,
+          iconTheme: const IconThemeData(color: Colors.white), // Set back arrow color to white
         ),
         bottomNavigationBar: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,

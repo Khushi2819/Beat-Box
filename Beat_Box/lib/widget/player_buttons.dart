@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 
 
+
+
 class PlayerButtons extends StatelessWidget{
   const PlayerButtons({
     Key?key,
@@ -13,6 +15,8 @@ class PlayerButtons extends StatelessWidget{
   {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
+
+
 
 
       children: [
@@ -35,6 +39,8 @@ class PlayerButtons extends StatelessWidget{
             if(snapshot.hasData){
               final playerState = snapshot.data;
               final processingState = (playerState! as PlayerState).processingState;
+
+
 
 
               if(processingState == ProcessingState.loading ||
@@ -75,6 +81,8 @@ class PlayerButtons extends StatelessWidget{
                   onPressed: () => audioPlayer.seek(
                     Duration.zero,
                     index:audioPlayer.effectiveIndices!.first,
+
+
 
 
                   ),

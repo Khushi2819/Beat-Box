@@ -22,7 +22,7 @@ class SongCard extends StatelessWidget {
           alignment: Alignment.bottomCenter,
           children: [
             Container(
-              width: MediaQuery.of(context).size.width * 0.45, // Adjusted width
+              width: MediaQuery.of(context).size.width * 0.50, // Adjusted width
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(15.0),
                 image: DecorationImage(
@@ -35,11 +35,11 @@ class SongCard extends StatelessWidget {
             ),
             Container(
               height: 50,
-              width: MediaQuery.of(context).size.width * 0.37, // Adjusted width
+              width: MediaQuery.of(context).size.width * 0.45, // Adjusted width
               margin: const EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10.0),
-                color: Colors.white.withOpacity(0.5),
+                color: Colors.white.withOpacity(0.8),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -55,7 +55,7 @@ class SongCard extends StatelessWidget {
                               .textTheme
                               .bodyLarge!
                               .copyWith(
-                            color: Colors.deepPurple,
+                            color: Colors.deepPurple.shade800,
                             fontWeight: FontWeight.bold,
                           ),
                           overflow: TextOverflow.ellipsis, // Prevent overflow
@@ -66,7 +66,7 @@ class SongCard extends StatelessWidget {
                               .textTheme
                               .bodyMedium!
                               .copyWith(
-                            color: Colors.white,
+                            color: Colors.deepPurple.shade500,
                             fontWeight: FontWeight.bold,
                           ),
                           overflow: TextOverflow.ellipsis, // Prevent overflow
