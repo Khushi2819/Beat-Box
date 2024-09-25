@@ -151,10 +151,7 @@ class _PlaylistSongs extends StatelessWidget {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'add_to_playlist',
-                child: Text('Add to Playlist'),
-              ),
+
               const PopupMenuItem(
                 value: 'delete',
                 child: Text('Delete from Playlist'),
