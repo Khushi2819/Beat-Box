@@ -54,78 +54,77 @@ class _SongScreenState extends State<SongScreen> {
     String? userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
 
-
     var snapshot = await FirebaseFirestore.instance
         .collection('playlists')
         .where('userId', isEqualTo: userId)
         .get();
 
-
     List<MusicCollection> playlists = snapshot.docs
         .map((doc) => MusicCollection.fromDocument(doc))
         .toList();
-
 
     // Show the dialog with playlists
     showDialog(
       context: context,
       builder: (context) {
-        return SingleChildScrollView(
-          child: AlertDialog(
-            backgroundColor: Colors.deepPurple.shade800, // Set background color
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20), // Customize shape
-            ),
-            contentPadding: EdgeInsets.zero, // Remove default padding
-            content: Container(
-              width: double.maxFinite,
-              height: 400, // Set a fixed height for the dialog box
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'Select a Playlist',
-                      style: TextStyle(color: Colors.white, fontSize: 18),
+        return Center( // This centers the dialog
+          child: SingleChildScrollView(
+            child: AlertDialog(
+              backgroundColor: Colors.deepPurple.shade800, // Set background color
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20), // Customize shape
+              ),
+              contentPadding: EdgeInsets.zero, // Remove default padding
+              content: Container(
+                width: MediaQuery.of(context).size.width * 0.8, // Set width based on screen size
+                height: 400, // Set a fixed height for the dialog box
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        'Select a Playlist',
+                        style: TextStyle(color: Colors.white, fontSize: 18),
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: playlists.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          leading: SizedBox(
-                            width: 50, // Set the image size
-                            height: 50,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                playlists[index].imageUrl ?? '', // Add image URL for the playlist
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  // Use a default playlist image if the URL fails or is null
-                                  return Image.asset(
-                                    'assets/images/default_playlist.png', // Replace with your default image path
-                                    fit: BoxFit.cover,
-                                  );
-                                },
+                    Expanded(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: playlists.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            leading: SizedBox(
+                              width: 50, // Set the image size
+                              height: 50,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  playlists[index].imageUrl ?? '', // Add image URL for the playlist
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    // Use a default playlist image if the URL fails or is null
+                                    return Image.asset(
+                                      'assets/images/default_playlist.png', // Replace with your default image path
+                                      fit: BoxFit.cover,
+                                    );
+                                  },
+                                ),
                               ),
                             ),
-                          ),
-                          title: Text(
-                            playlists[index].title,
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          onTap: () {
-                            _addSongToPlaylist(playlists[index]);
-                            Navigator.pop(context); // Close the dialog
-                          },
-                        );
-                      },
+                            title: Text(
+                              playlists[index].title,
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            onTap: () {
+                              _addSongToPlaylist(playlists[index]);
+                              Navigator.pop(context); // Close the dialog
+                            },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
