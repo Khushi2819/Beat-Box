@@ -101,7 +101,7 @@ class _TrendingMusicScreenState extends State<TrendingMusicScreen> {
                 Get.to(() => const UserPlaylistScreen()); // Navigate to UserPlaylistScreen
                 break;
               case 3:
-                Get.to(() => const ProfileScreen());
+                Get.to(() => ProfileScreen());
                 break;
             }
           },

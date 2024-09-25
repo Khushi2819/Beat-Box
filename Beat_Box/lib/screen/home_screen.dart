@@ -157,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Get.to(() => const UserPlaylistScreen());
                 break;
               case 3:
-                Get.to(() => const ProfileScreen());
+                Get.to(() => ProfileScreen());
                 break;
             }
           },
@@ -250,12 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SectionHeader(
-                            title: 'Playlists',
-                            onViewMoreTap: () {
-                              Get.to(() => const UserPlaylistScreen()); // Navigate to UserPlaylistScreen
-                            },
-                          ),
+                          const SectionHeader(title: 'Playlists'),
                           ListView.builder(
                             shrinkWrap: true,
                             padding: const EdgeInsets.only(top: 20),
