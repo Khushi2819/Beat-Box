@@ -7,6 +7,8 @@ import '../widget/player_buttons.dart';
 import '../widget/seekbar.dart';
 import 'package:get/get.dart';
 import 'package:rxdart/rxdart.dart' as rxdart;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SongScreen extends StatefulWidget {
   const SongScreen({Key? key}) : super(key: key);
@@ -18,6 +20,7 @@ class SongScreen extends StatefulWidget {
 class _SongScreenState extends State<SongScreen> {
   late AudioPlayer audioPlayer;
   late Song song;
+  final PlaylistController playlistController = Get.put(PlaylistController());
 
   @override
   void initState() {
@@ -29,16 +32,64 @@ class _SongScreenState extends State<SongScreen> {
 
   Future<void> _playSong() async {
     try {
-      // Use audio source from the URL instead of assets
       await audioPlayer.setAudioSource(
         AudioSource.uri(
-          Uri.parse(song.url), // Assume song.url contains the audio URL
+          Uri.parse(song.url),
         ),
       );
       audioPlayer.play();
     } catch (e) {
       print('Error playing song: $e');
     }
+  }
+
+  Future<void> _showAddToPlaylistDialog() async {
+    // Fetch user's playlists
+    String? userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    var snapshot = await FirebaseFirestore.instance
+        .collection('playlists')
+        .where('userId', isEqualTo: userId)
+        .get();
+
+    List<MusicCollection> playlists = snapshot.docs
+        .map((doc) => MusicCollection.fromDocument(doc))
+        .toList();
+
+    // Show the dialog with playlists
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Select a Playlist'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              itemCount: playlists.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(playlists[index].title),
+                  onTap: () {
+                    _addSongToPlaylist(playlists[index]);
+                    Navigator.pop(context); // Close the dialog
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _addSongToPlaylist(MusicCollection playlist) async {
+    // Add the song to the selected playlist
+    playlist.songs.add(song); // Assuming the song model can be added directly
+    await FirebaseFirestore.instance
+        .collection('playlists')
+        .doc(playlist.id) // Use the playlist ID to update
+        .update({'songs': playlist.songs.map((s) => s.toMap()).toList()}); // Convert songs to a map format
   }
 
   @override
@@ -70,34 +121,34 @@ class _SongScreenState extends State<SongScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            SizedBox(height: 80), // Space above the image
+            SizedBox(height: 80),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0), // Horizontal padding
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Row(
                 children: [
                   IconButton(
                     icon: Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () {
-                      Navigator.pop(context); // Navigate back to the previous screen
+                      Navigator.pop(context);
                     },
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 60), // Space between the back arrow and the image
+            SizedBox(height: 60),
             Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0), // Adds horizontal padding
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: AspectRatio(
                   aspectRatio: 1,
                   child: Container(
-                    width: double.infinity * 0.8, // Adjust the width here
+                    width: double.infinity * 0.8,
                     decoration: BoxDecoration(
                       image: DecorationImage(
-                        image: NetworkImage(song.coverUrl), // Load cover image from assets
+                        image: NetworkImage(song.coverUrl),
                         fit: BoxFit.cover,
                       ),
-                      borderRadius: BorderRadius.circular(12), // Adds rounded corners to the image
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
@@ -108,6 +159,7 @@ class _SongScreenState extends State<SongScreen> {
                 song: song,
                 seekBarDataStream: _seekBarDataStream,
                 audioPlayer: audioPlayer,
+                onAddToPlaylist: _showAddToPlaylistDialog, // Pass the function to the music player
               ),
             ),
           ],
@@ -123,12 +175,14 @@ class _MusicPlayer extends StatelessWidget {
     required this.song,
     required Stream<SeekBarData> seekBarDataStream,
     required this.audioPlayer,
+    required this.onAddToPlaylist, // Added parameter
   })  : _seekBarDataStream = seekBarDataStream,
         super(key: key);
 
   final Song song;
   final Stream<SeekBarData> _seekBarDataStream;
   final AudioPlayer audioPlayer;
+  final Function onAddToPlaylist; // Added parameter
 
   @override
   Widget build(BuildContext context) {
@@ -180,7 +234,7 @@ class _MusicPlayer extends StatelessWidget {
                 icon: Icon(Icons.add_to_photos, color: Colors.white),
                 iconSize: 35,
                 onPressed: () {
-                  // Implement add to playlist action here
+                  onAddToPlaylist(); // Trigger the add to playlist dialog
                 },
               ),
             ],

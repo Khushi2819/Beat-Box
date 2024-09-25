@@ -20,14 +20,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      home: HomeScreen(), // Show login page first
+      home: LoginPage(), // Show login page first
       getPages: [
         GetPage(name: '/home', page: () => const HomeScreen()),
         GetPage(name: '/login', page: () => const LoginPage()),
         GetPage(name: '/signup', page: () => const SignupPage()),
         GetPage(name: '/trending', page: () => const TrendingMusicScreen()),
         GetPage(name: '/song', page: () => const SongScreen()),
-        GetPage(name: '/playlist', page: () => const PlaylistScreen()),
+        GetPage(name: '/playlist', page: () => PlaylistScreen(playlist: Get.arguments)),
         GetPage(name: '/library', page: () =>  UserPlaylistScreen()),
       ],
     );

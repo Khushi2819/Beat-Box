@@ -1,8 +1,10 @@
+import 'package:beatbox/screen/playlist_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Cloud Firestore
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/MusicCollection.dart';
 import '../models/Playlist_Controller.dart';
-import '../models/song_model.dart'; // Import the Song model
 import 'TrendingMusicScreen.dart';
 import 'home_screen.dart';
 
@@ -15,124 +17,86 @@ class UserPlaylistScreen extends StatefulWidget {
 
 class _UserPlaylistScreenState extends State<UserPlaylistScreen> {
   final PlaylistController playlistController = Get.put(PlaylistController());
-  final FirebaseFirestore _db = FirebaseFirestore.instance; // Firestore instance
-
-  List<Map<String, dynamic>> userPlaylists = []; // Directly using a list of maps for playlists
   final TextEditingController _playlistNameController = TextEditingController();
-
-  // Variable to track selected index in BottomNavigationBar
-  int _selectedIndex = 2; // Set default to "Play" (Library) index (2)
 
   @override
   void initState() {
     super.initState();
-    _fetchPlaylists(); // Fetch playlists when the screen is initialized
+    _fetchUserPlaylists();
   }
 
-  // Method to fetch playlists from Firestore
-  Future<void> _fetchPlaylists() async {
-    try {
-      QuerySnapshot snapshot = await _db.collection('playlists').get();
-      setState(() {
-        userPlaylists = snapshot.docs.map((doc) {
-          Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-          return {
-            'title': data['title'],
-            'songs': (data['songs'] as List<dynamic>).map((song) {
-              // Ensure each song is properly converted to a Song object
-              return Song.fromMap(song as Map<String, dynamic>);
-            }).toList(),
-            'imageUrl': data['imageUrl'],
-          };
-        }).toList();
-      });
-    } catch (e) {
-      print("Error fetching playlists: $e");
+  void _fetchUserPlaylists() async {
+    String? userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null && userId.isNotEmpty) {
+      var snapshot = await FirebaseFirestore.instance
+          .collection('playlists')
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      playlistController.userPlaylists.value = snapshot.docs
+          .map((doc) => MusicCollection.fromDocument(doc))
+          .toList();
     }
   }
 
-  // Method to create a new playlist and add to Firestore
-  Future<void> _createPlaylist(String name) async {
-    try {
-      DocumentReference newPlaylistRef = await _db.collection('playlists').add({
-        'title': name,
-        'songs': [], // Initially empty
-        'imageUrl': '', // Initially empty
-      });
+  void _createPlaylist(String name) async {
+    // Check for duplicate names
+    if (playlistController.userPlaylists.any((playlist) => playlist.title == name)) {
+      Get.snackbar('Error', 'A playlist with this name already exists.');
+      return;
+    }
 
-      // Update local list with the new playlist
-      setState(() {
-        userPlaylists.add({
-          'title': name,
-          'songs': [], // Initially empty
-          'imageUrl': '', // Initially empty
-        });
-      });
+    String? userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null && userId.isNotEmpty) {
+      MusicCollection newPlaylist = MusicCollection(
+        id: '', // Will be set after saving
+        title: name,
+        songs: [],
+        imageUrl: '',
+        userId: userId,
+      );
+
+      await newPlaylist.saveToFirestore();
+      newPlaylist.id = newPlaylist.id; // Ensure the ID is set
+      playlistController.userPlaylists.add(newPlaylist);
+
       _playlistNameController.clear();
       Get.back();
-    } catch (e) {
-      print("Error creating playlist: $e");
+    } else {
+      print("Error: User not logged in");
     }
   }
 
-  // Dialog to create a new playlist
   void _showCreatePlaylistDialog() {
-    Get.dialog(
-      AlertDialog(
-        backgroundColor: Colors.deepPurple.shade800.withOpacity(0.9), // Deep purple and a bit transparent
-        title: const Text('Create Playlist', style: TextStyle(color: Colors.white)),
-        content: TextField(
-          controller: _playlistNameController,
-          decoration: const InputDecoration(
-            hintText: 'Enter playlist name',
-            hintStyle: TextStyle(color: Colors.white70), // Make hint text white
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Create Playlist'),
+          content: TextField(
+            controller: _playlistNameController,
+            decoration: const InputDecoration(hintText: 'Playlist Name'),
           ),
-          style: const TextStyle(color: Colors.white), // Make input text white
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Get.back();
-            },
-            child: const Text('Cancel', style: TextStyle(color: Colors.white)), // White text
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white, // White button
-              foregroundColor: Colors.deepPurple, // Deep purple text
+          actions: [
+            TextButton(
+              onPressed: () {
+                _playlistNameController.clear();
+                Get.back(); // Cancel action
+              },
+              child: const Text('Cancel'),
             ),
-            onPressed: () {
-              if (_playlistNameController.text.isNotEmpty) {
-                _createPlaylist(_playlistNameController.text);
-              }
-            },
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+            TextButton(
+              onPressed: () {
+                if (_playlistNameController.text.isNotEmpty) {
+                  _createPlaylist(_playlistNameController.text);
+                }
+              },
+              child: const Text('Create'),
+            ),
+          ],
+        );
+      },
     );
-  }
-
-  // Function to handle BottomNavigationBar item taps
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index; // Update the selected index
-    });
-
-    switch (index) {
-      case 0:
-        Get.offAll(() => const HomeScreen()); // Navigate to HomeScreen
-        break;
-      case 1:
-        Get.offAll(() => const TrendingMusicScreen()); // Navigate to TrendingMusicScreen
-        break;
-      case 2:
-      // Already on Play (Library) screen, no need to navigate
-        break;
-      case 3:
-      // Handle Profile navigation here if necessary
-        break;
-    }
   }
 
   @override
@@ -154,39 +118,43 @@ class _UserPlaylistScreenState extends State<UserPlaylistScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white), // White back arrow
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () {
-              Get.back(); // Go back to the previous screen
+              Get.back();
             },
           ),
-          title: const Text('Your Playlists', style: TextStyle(color: Colors.white)), // White title
+          title: const Text('Your Playlists', style: TextStyle(color: Colors.white)),
           actions: [
             IconButton(
-              icon: const Icon(Icons.add, color: Colors.white), // White icon for "+" button
+              icon: const Icon(Icons.add, color: Colors.white),
               onPressed: _showCreatePlaylistDialog,
             ),
           ],
         ),
-        body: userPlaylists.isEmpty
-            ? const Center(
-          child: Text(
-            'No playlists yet. Create one!',
-            style: TextStyle(color: Colors.white),
-          ),
-        )
-            : ListView.builder(
-          padding: const EdgeInsets.all(20.0),
-          itemCount: userPlaylists.length,
-          itemBuilder: (context, index) {
-            final playlist = userPlaylists[index];
-            return GestureDetector(
-              onTap: () {
-                // Add logic to navigate to playlist details or add songs
-              },
-              child: CardPlay(playlist: playlist), // Display each playlist using the CardPlay widget
+        body: Obx(() {
+          if (playlistController.userPlaylists.isEmpty) {
+            return const Center(
+              child: Text(
+                'No playlists yet. Create one!',
+                style: TextStyle(color: Colors.white),
+              ),
             );
-          },
-        ),
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(20.0),
+            itemCount: playlistController.userPlaylists.length,
+            itemBuilder: (context, index) {
+              final playlist = playlistController.userPlaylists[index];
+              return GestureDetector(
+                onTap: () {
+                  // Navigate to playlist details
+                },
+                child: CardPlay(playlist: playlist),
+              );
+            },
+          );
+        }),
         bottomNavigationBar: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.deepPurple.shade800,
@@ -194,8 +162,23 @@ class _UserPlaylistScreenState extends State<UserPlaylistScreen> {
           selectedItemColor: Colors.white,
           showSelectedLabels: false,
           showUnselectedLabels: false,
-          currentIndex: _selectedIndex, // Set the current selected index
-          onTap: _onItemTapped, // Handle taps on BottomNavigationBar
+          currentIndex: 2, // Assuming 2 is the index for this screen
+          onTap: (index) {
+            switch (index) {
+              case 0:
+                Get.offAll(() => const HomeScreen());
+                break;
+              case 1:
+                Get.offAll(() => const TrendingMusicScreen());
+                break;
+              case 2:
+              // Stay on current page
+                break;
+              case 3:
+              // Navigate to Profile Screen (you can replace this with actual navigation)
+                break;
+            }
+          },
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
@@ -207,7 +190,7 @@ class _UserPlaylistScreenState extends State<UserPlaylistScreen> {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.library_music_outlined),
-              label: 'Play',
+              label: 'Playlists',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.people_outline),
@@ -221,7 +204,7 @@ class _UserPlaylistScreenState extends State<UserPlaylistScreen> {
 }
 
 class CardPlay extends StatelessWidget {
-  final Map<String, dynamic> playlist; // Changed to a map
+  final MusicCollection playlist;
 
   const CardPlay({
     Key? key,
@@ -233,18 +216,31 @@ class CardPlay extends StatelessWidget {
     return Card(
       elevation: 5,
       margin: const EdgeInsets.symmetric(vertical: 10.0),
+      color: Colors.deepPurple.shade800, // Set background color to deep purple
       child: ListTile(
-        leading: playlist['imageUrl'].isNotEmpty
-            ? Image.asset(playlist['imageUrl'], fit: BoxFit.cover, width: 50, height: 50)
-            : const Icon(Icons.music_note, size: 50), // Placeholder icon if no image
+        leading: (playlist.songs.isNotEmpty && playlist.songs.first.coverUrl.isNotEmpty)
+            ? Image.network(
+          playlist.songs.first.coverUrl,
+          fit: BoxFit.cover,
+          width: 50,
+          height: 50,
+        )
+            : const Icon(Icons.music_note, size: 50, color: Colors.white), // Change icon color to white
         title: Text(
-          playlist['title'],
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          playlist.title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white, // Change title text color to white
+          ),
         ),
-        subtitle: Text('${(playlist['songs'] as List<Song>).length} songs'), // Display number of songs
-        trailing: const Icon(Icons.chevron_right),
+        subtitle: Text(
+          '${playlist.songs.length} songs',
+          style: const TextStyle(color: Colors.white), // Change subtitle text color to white
+        ),
+        trailing: const Icon(Icons.chevron_right, color: Colors.white), // Change trailing icon color to white
         onTap: () {
-          // You can add a function to navigate to the playlist's detail page here
+          // Navigate to PlaylistScreen and pass the playlist
+          Get.to(() => PlaylistScreen(playlist: playlist));
         },
       ),
     );

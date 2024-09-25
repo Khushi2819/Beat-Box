@@ -1,11 +1,14 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
-import '../models/playlist_model.dart';
+
+import '../models/MusicCollection.dart';
 import '../models/song_model.dart';
 
 class PlaylistScreen extends StatelessWidget {
-  const PlaylistScreen({Key? key}) : super(key: key);
+  final MusicCollection playlist;
+
+  const PlaylistScreen({Key? key, required this.playlist}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -25,72 +28,65 @@ class PlaylistScreen extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text('Playlist'),
+          iconTheme: const IconThemeData(color: Colors.white), // Makes back arrow white
+          title: Text(playlist.title, style: const TextStyle(color: Colors.white)), // Makes header white
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.white), // Delete playlist icon
+              onPressed: () {
+                _deletePlaylist(context);
+              },
+            ),
+          ],
         ),
-        body: FutureBuilder<List<Playlist>>(
-          future: fetchPlaylists(), // Fetch playlists from Firestore
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Center(child: Text('No Playlists Available'));
-            }
-
-            List<Playlist> playlists = snapshot.data!;
-
-            return SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  children: playlists.map((playlist) {
-                    return Column(
-                      children: [
-                        _PlaylistInformation(playlist: playlist),
-                        const SizedBox(height: 30),
-                        const _PlayOrShuffleSwitch(),
-                        _PlaylistSongs(playlist: playlist),
-                        const SizedBox(height: 30),
-                      ],
-                    );
-                  }).toList(),
-                ),
-              ),
-            );
-          },
+        body: playlist.songs.isEmpty
+            ? const Center(
+          child: Text(
+            'No songs in this playlist',
+            style: TextStyle(color: Colors.white),
+          ),
+        )
+            : SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: [
+                _PlaylistInformation(playlist: playlist),
+                const SizedBox(height: 30),
+                _PlaylistSongs(playlist: playlist),
+                const SizedBox(height: 30),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Future<List<Playlist>> fetchPlaylists() async {
-    List<Playlist> playlists = [];
-    final snapshot = await FirebaseFirestore.instance.collection('playlists').get();
-
-    for (var doc in snapshot.docs) {
-      final data = doc.data();
-      final title = data['title'] ?? '';
-      final imageUrl = data['imageUrl'] ?? '';
-
-      // Assuming songs is a list of maps in Firestore
-      List<Song> songs = (data['songs'] as List).map((songData) {
-        return Song.fromMap(songData);
-      }).toList();
-
-      playlists.add(Playlist(title: title, songs: songs, imageUrl: imageUrl));
-    }
-    return playlists;
+  // Function to delete the playlist
+  void _deletePlaylist(BuildContext context) {
+    Get.defaultDialog(
+      title: 'Delete Playlist',
+      middleText: 'Are you sure you want to delete this playlist?',
+      onConfirm: () {
+        // Perform delete logic here
+        Get.back(); // Close the dialog
+        Get.snackbar('Success', 'Playlist deleted');
+        // Optionally navigate back after deleting
+        Get.back();
+      },
+      onCancel: () => Get.back(),
+    );
   }
 }
 
 class _PlaylistSongs extends StatelessWidget {
+  final MusicCollection playlist;
+
   const _PlaylistSongs({
     Key? key,
     required this.playlist,
   }) : super(key: key);
-
-  final Playlist playlist;
 
   @override
   Widget build(BuildContext context) {
@@ -99,149 +95,108 @@ class _PlaylistSongs extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: playlist.songs.length,
       itemBuilder: (context, index) {
+        final song = playlist.songs[index];
         return ListTile(
-          leading: Text(
-            '${index + 1}',
-            style: Theme.of(context).textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
-          ),
+          onTap: () {
+            // Navigate to SongScreen when the song is clicked
+            Get.toNamed('/song', arguments: song);
+          },
+          leading: Image.network(song.coverUrl, width: 50, height: 50, fit: BoxFit.cover),
           title: Text(
-            playlist.songs[index].title,
-            style: Theme.of(context).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
+            song.title,
+            style: Theme.of(context)
+                .textTheme
+                .bodyLarge!
+                .copyWith(fontWeight: FontWeight.bold, color: Colors.white), // Set song title text to white
           ),
-          subtitle: Text('${playlist.songs[index].description}'),
-          trailing: const Icon(
-            Icons.more_vert,
-            color: Colors.white,
+          subtitle: Text(
+            song.description,
+            style: const TextStyle(color: Colors.white), // Set song description text to white
+          ),
+          trailing: PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'add_to_playlist') {
+                _showAddToPlaylistDialog(context, song);
+              } else if (value == 'delete') {
+                _deleteSongFromPlaylist(context, playlist, song);
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'add_to_playlist',
+                child: Text('Add to Playlist'),
+              ),
+              const PopupMenuItem(
+                value: 'delete',
+                child: Text('Delete from Playlist'),
+              ),
+            ],
+            icon: const Icon(Icons.more_vert, color: Colors.white),
           ),
         );
       },
     );
   }
-}
-class _PlayOrShuffleSwitch extends StatefulWidget{
-  const _PlayOrShuffleSwitch({
-    Key? key,
-  }) : super(key: key);
 
-  @override
-  State<_PlayOrShuffleSwitch> createState() => _PlayOrShuffleSwitchState();
+  // Function to show add-to-playlist dialog
+  void _showAddToPlaylistDialog(BuildContext context, Song song) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add to Playlist'),
+          content: Text('Add ${song.title} to another playlist.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                // Implement add to playlist logic here
+                Navigator.pop(context);
+                Get.snackbar('Success', '${song.title} added to playlist');
+              },
+              child: const Text('Add'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Function to delete the song from the playlist
+  void _deleteSongFromPlaylist(BuildContext context, MusicCollection playlist, Song song) {
+    playlist.songs.remove(song);
+    Get.snackbar('Success', '${song.title} deleted from playlist');
+    // Optionally, refresh UI after removing song
+  }
 }
-class _PlayOrShuffleSwitchState extends State<_PlayOrShuffleSwitch> {
-  bool isPlay = true;
+
+class _PlaylistInformation extends StatelessWidget {
+  final MusicCollection playlist;
+
+  const _PlaylistInformation({Key? key, required this.playlist}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    double width = MediaQuery.of(context).size.width;
-
-    return GestureDetector(
-      onTap: (){
-        setState(() {
-          isPlay = !isPlay;
-        });
-      },
-      child: Container(
-        height: 50,
-        width: width,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-        ),
-
-        child: Stack(
-          children: [
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 200),
-              left: isPlay ? 0 : width * 0.45,
-              child: Container(
-                height: 50,
-                width: width * 0.45,
-                decoration: BoxDecoration(
-                  color: Colors.deepPurple.shade400,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Center(
-                        child: Text(
-                          'Play',
-                          style: TextStyle(
-                            color: isPlay ? Colors.white : Colors.deepPurple,
-                            fontSize: 17,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Icon(
-                        Icons.play_circle,
-                        color: isPlay ? Colors.white : Colors.deepPurple,
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Center(
-                        child: Text(
-                          'Shuffle',
-                          style: TextStyle(
-                            color: isPlay ? Colors.deepPurple : Colors.white,
-                            fontSize: 17,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Icon(
-                        Icons.shuffle,
-                        color: isPlay ? Colors.deepPurple : Colors.white,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),],
-        ),
-      ),
-    );
-  }
-}
-class _PlaylistInformation extends StatelessWidget{
-  const _PlaylistInformation({
-    Key? key,
-    required this.playlist,
-  }) : super(key: key);
-  final Playlist playlist;
-  @override
-  Widget build(BuildContext context){
     return Column(
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(15.0),
-          child: Image.network(
-            playlist.imageUrl,
+          child: playlist.songs.isNotEmpty
+              ? Image.network(
+            playlist.songs.first.coverUrl,
             height: MediaQuery.of(context).size.height * 0.3,
             width: MediaQuery.of(context).size.height * 0.3,
             fit: BoxFit.cover,
-          ),
+          )
+              : const Icon(Icons.music_note, size: 100),
         ),
         const SizedBox(height: 30),
-        Text(
-          playlist.title,
-          style: Theme.of(context)
-              .textTheme
-              .headlineSmall!
-              .copyWith(fontWeight: FontWeight.bold),
-        ),
       ],
     );
   }
 }
-
-// Other widget classes (_PlayOrShuffleSwitch, _PlaylistInformation) remain the same

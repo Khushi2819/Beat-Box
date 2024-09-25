@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 
+
 class PlayerButtons extends StatelessWidget{
   const PlayerButtons({
     Key?key,
@@ -13,19 +14,20 @@ class PlayerButtons extends StatelessWidget{
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
 
+
       children: [
         StreamBuilder<SequenceState?>(
-            stream: audioPlayer.sequenceStateStream,
-            builder: (context,index){
-              return IconButton(
-                  onPressed: audioPlayer.hasPrevious ? audioPlayer.seekToPrevious : null,
-                  iconSize: 45,
-                  icon:const Icon(
-                    Icons.skip_previous,
-                    color: Colors.white,
-                  ),
-              );
-            },
+          stream: audioPlayer.sequenceStateStream,
+          builder: (context,index){
+            return IconButton(
+              onPressed: audioPlayer.hasPrevious ? audioPlayer.seekToPrevious : null,
+              iconSize: 45,
+              icon:const Icon(
+                Icons.skip_previous,
+                color: Colors.white,
+              ),
+            );
+          },
         ),
         StreamBuilder<PlayerState>(
           stream: audioPlayer.playerStateStream,
@@ -33,6 +35,7 @@ class PlayerButtons extends StatelessWidget{
             if(snapshot.hasData){
               final playerState = snapshot.data;
               final processingState = (playerState! as PlayerState).processingState;
+
 
               if(processingState == ProcessingState.loading ||
                   processingState == ProcessingState.buffering){
@@ -72,6 +75,7 @@ class PlayerButtons extends StatelessWidget{
                   onPressed: () => audioPlayer.seek(
                     Duration.zero,
                     index:audioPlayer.effectiveIndices!.first,
+
 
                   ),
                 );

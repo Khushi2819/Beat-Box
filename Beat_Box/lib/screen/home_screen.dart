@@ -8,7 +8,7 @@ import '../widget/song_card.dart';
 import 'TrendingMusicScreen.dart';
 import 'library.dart'; // Import the UserPlaylistScreen
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -18,62 +18,99 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
+  List<Song> songs = [];
+  List<Song> filteredSongs = [];
+  List<Playlist> userPlaylists = [];
+  String searchQuery = '';
 
   Future<List<Song>> fetchSongs() async {
     List<Song> songList = [];
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
     try {
-      // Get the songs collection
       QuerySnapshot snapshot = await firestore.collection('songs').get();
-
-      // Map each document to the Song model
       for (var doc in snapshot.docs) {
         Song song = Song(
-          title: doc['title'],
-          description: doc['description'],
-          url: doc['url'],
-          coverUrl: doc['coverUrl'],
+          title: doc['title'] ?? '',
+          description: doc['description'] ?? '',
+          url: doc['url'] ?? '',
+          coverUrl: doc['coverUrl'] ?? '',
         );
         songList.add(song);
       }
     } catch (e) {
       print('Error fetching songs: $e');
     }
-    print(songList);
     return songList;
   }
-  List<Song> songs = [];
-  List<Song> filteredSongs = [];
-  String searchQuery = '';
+
+  Future<List<Playlist>> fetchPlaylists() async {
+    List<Playlist> playlistList = [];
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    try {
+      QuerySnapshot snapshot = await firestore.collection('playlists').get();
+      for (var doc in snapshot.docs) {
+        print('Document Data: ${doc.data()}'); // Debugging
+        List<Song> songList = [];
+
+        if (doc['songs'] is List) {
+          for (var songData in doc['songs']) {
+            Song song = Song(
+              title: songData['title'] ?? '',
+              description: songData['description'] ?? '',
+              url: songData['url'] ?? '',
+              coverUrl: songData['coverUrl'] ?? '',
+            );
+            songList.add(song);
+          }
+        } else {
+          print('Unexpected type for songs field: ${doc['songs']}');
+        }
+
+        Playlist playlist = Playlist(
+          title: doc['title'] ?? '',
+          imageUrl: doc['imageUrl'] ?? '',
+          songs: songList,
+        );
+        playlistList.add(playlist);
+      }
+    } catch (e) {
+      print('Error fetching playlists: $e');
+    }
+    return playlistList;
+  }
+
   Future<void> loadSongs() async {
-    songs = await fetchSongs(); // Wait for the fetch to complete
+    songs = await fetchSongs();
     setState(() {
-      filteredSongs = songs; // Update filteredSongs here
+      filteredSongs = songs;
     });
+  }
+
+  Future<void> loadPlaylists() async {
+    userPlaylists = await fetchPlaylists(); // Load playlists here
   }
 
   @override
   void initState() {
     super.initState();
     loadSongs();
+    loadPlaylists(); // Load playlists on init
   }
 
   void _filterSongs(String query) {
     setState(() {
       searchQuery = query;
-      filteredSongs = songs
-          .where((song) =>
+      filteredSongs = songs.where((song) =>
       song.title.toLowerCase().contains(query.toLowerCase()) ||
-          song.description.toLowerCase().contains(query.toLowerCase()))
-          .toList();
+          song.description.toLowerCase().contains(query.toLowerCase())
+      ).toList();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Determine the songs to display in the Trending Music section
     List<Song> displayedSongs = searchQuery.isEmpty
         ? filteredSongs.take(3).toList()
         : filteredSongs;
@@ -105,10 +142,10 @@ class _HomeScreenState extends State<HomeScreen> {
               // Handle Home navigation
                 break;
               case 1:
-                Get.to(() => const TrendingMusicScreen()); // Navigate to TrendingMusicScreen
+                Get.to(() => const TrendingMusicScreen());
                 break;
               case 2:
-                Get.to(() => const UserPlaylistScreen()); // Navigate to UserPlaylistScreen
+                Get.to(() => const UserPlaylistScreen());
                 break;
               case 3:
               // Handle Profile navigation
@@ -144,20 +181,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Text(
                       'Welcome',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyLarge!
-                          .copyWith(color: Colors.white),
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(color: Colors.white),
                     ),
                     const SizedBox(height: 5),
                     Text(
                       'Enjoy your favorite music',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineSmall!
-                          .copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
+                      style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                          fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                     const SizedBox(height: 20),
                     TextFormField(
@@ -167,12 +197,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         filled: true,
                         fillColor: Colors.white,
                         hintText: 'Search',
-                        hintStyle: Theme.of(context)
-                            .textTheme
-                            .bodyMedium!
-                            .copyWith(color: Colors.grey.shade400),
-                        prefixIcon:
-                        Icon(Icons.search, color: Colors.grey.shade400),
+                        hintStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(color: Colors.grey.shade400),
+                        prefixIcon: Icon(Icons.search, color: Colors.grey.shade400),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15.0),
                           borderSide: BorderSide.none,
@@ -182,10 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 20),
                     Text(
                       'Trending Music',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineSmall!
-                          .copyWith(
+                      style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
@@ -211,10 +234,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             shrinkWrap: true,
                             padding: const EdgeInsets.only(top: 20),
                             physics: const NeverScrollableScrollPhysics(),
-                            itemCount: 0,
+                            itemCount: userPlaylists.length,
                             itemBuilder: (context, index) {
-                              return PlaylistCard(
-                                  playlist: Playlist.playlists[index]);
+                              return PlaylistCard(playlist: userPlaylists[index]);
                             },
                           ),
                         ],
