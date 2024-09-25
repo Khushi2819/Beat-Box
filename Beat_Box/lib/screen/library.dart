@@ -147,8 +147,10 @@ class _UserPlaylistScreenState extends State<UserPlaylistScreen> {
             itemBuilder: (context, index) {
               final playlist = playlistController.userPlaylists[index];
               return GestureDetector(
-                onTap: () {
-                  // Navigate to playlist details
+                onTap: () async {
+                  // Wait for PlaylistScreen to return and then refresh playlists
+                  await Get.to(() => PlaylistScreen(playlist: playlist));
+                  setState(() {}); // Refresh the UI to reflect changes
                 },
                 child: CardPlay(playlist: playlist),
               );

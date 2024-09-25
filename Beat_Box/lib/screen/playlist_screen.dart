@@ -5,13 +5,24 @@ import '../models/MusicCollection.dart';
 import '../models/Playlist_Controller.dart';
 import '../models/song_model.dart';
 
-class PlaylistScreen extends StatelessWidget {
+class PlaylistScreen extends StatefulWidget {
   final MusicCollection playlist;
-  final PlaylistController playlistController; // Get instance of your PlaylistController
 
-  PlaylistScreen({Key? key, required this.playlist})
-      : playlistController = Get.find<PlaylistController>(), // Remove 'const'
-        super(key: key);
+  PlaylistScreen({Key? key, required this.playlist}) : super(key: key);
+
+  @override
+  _PlaylistScreenState createState() => _PlaylistScreenState();
+}
+
+class _PlaylistScreenState extends State<PlaylistScreen> {
+  late PlaylistController playlistController;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the playlist controller
+    playlistController = Get.find<PlaylistController>();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +43,7 @@ class PlaylistScreen extends StatelessWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
           iconTheme: const IconThemeData(color: Colors.white), // Makes back arrow white
-          title: Text(playlist.title, style: const TextStyle(color: Colors.white)), // Makes header white
+          title: Text(widget.playlist.title, style: const TextStyle(color: Colors.white)), // Makes header white
           actions: [
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.white), // Delete playlist icon
@@ -42,7 +53,7 @@ class PlaylistScreen extends StatelessWidget {
             ),
           ],
         ),
-        body: playlist.songs.isEmpty
+        body: widget.playlist.songs.isEmpty
             ? const Center(
           child: Text(
             'No songs in this playlist',
@@ -54,9 +65,12 @@ class PlaylistScreen extends StatelessWidget {
             padding: const EdgeInsets.all(20.0),
             child: Column(
               children: [
-                _PlaylistInformation(playlist: playlist),
+                _PlaylistInformation(playlist: widget.playlist),
                 const SizedBox(height: 30),
-                _PlaylistSongs(playlist: playlist),
+                _PlaylistSongs(
+                  playlist: widget.playlist,
+                  refreshPlaylist: _refreshPlaylist, // Pass refresh function to the songs widget
+                ),
                 const SizedBox(height: 30),
               ],
             ),
@@ -74,11 +88,11 @@ class PlaylistScreen extends StatelessWidget {
       onConfirm: () async {
         // Call the controller to delete the playlist from Firestore
         try {
-          await playlistController.deletePlaylist(playlist); // Pass the entire playlist object
+          await playlistController.deletePlaylist(widget.playlist); // Pass the entire playlist object
           Get.back(); // Close the dialog
           Get.snackbar('Success', 'Playlist deleted');
           // Navigate back to the previous screen after deletion
-          Get.offAllNamed('/library'); // Replace '/playlistScreen' with your actual route name
+          Get.offAllNamed('/library'); // Replace '/library' with your actual route name
         } catch (error) {
           Get.snackbar('Error', 'Failed to delete playlist: $error');
         }
@@ -86,14 +100,21 @@ class PlaylistScreen extends StatelessWidget {
       onCancel: () => Get.back(),
     );
   }
+
+  // Function to refresh the playlist UI
+  void _refreshPlaylist() {
+    setState(() {});
+  }
 }
 
 class _PlaylistSongs extends StatelessWidget {
   final MusicCollection playlist;
+  final VoidCallback refreshPlaylist; // Add refresh function as a parameter
 
   const _PlaylistSongs({
     Key? key,
     required this.playlist,
+    required this.refreshPlaylist, // Initialize refreshPlaylist
   }) : super(key: key);
 
   @override
@@ -184,6 +205,7 @@ class _PlaylistSongs extends StatelessWidget {
         playlist.removeSong(song); // Call the remove song method
         Get.back(); // Close the dialog
         Get.snackbar('Success', 'Song deleted from playlist');
+        refreshPlaylist(); // Refresh the playlist after deleting the song
       },
       onCancel: () => Get.back(),
     );

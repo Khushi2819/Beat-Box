@@ -126,10 +126,17 @@ class _SongScreenState extends State<SongScreen> {
   Future<void> _addSongToPlaylist(MusicCollection playlist) async {
     // Add the song to the selected playlist
     playlist.songs.add(song); // Assuming the song model can be added directly
+    if(playlist.songs.length == 1){
+      await FirebaseFirestore.instance
+          .collection('playlists')
+          .doc(playlist.id) // Use the playlist ID to update
+          .update({'imageUrl':song.coverUrl});
+    }
     await FirebaseFirestore.instance
         .collection('playlists')
         .doc(playlist.id) // Use the playlist ID to update
-        .update({'songs': playlist.songs.map((s) => s.toMap()).toList()}); // Convert songs to a map format
+        .update({'songs': playlist.songs.map((s) => s.toMap()).toList()});
+
   }
 
   @override
@@ -263,13 +270,7 @@ class _MusicPlayer extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              IconButton(
-                icon: Icon(Icons.settings, color: Colors.white),
-                iconSize: 35,
-                onPressed: () {
-                  // Implement settings action here
-                },
-              ),
+
               IconButton(
                 icon: Icon(Icons.add_to_photos, color: Colors.white),
                 iconSize: 35,
