@@ -178,7 +178,7 @@ class _UserPlaylistScreenState extends State<UserPlaylistScreen> {
               // Stay on current page
                 break;
               case 3:
-                Get.to(() => const ProfileScreen());
+                Get.to(() => ProfileScreen());
                 break;
             }
           },
