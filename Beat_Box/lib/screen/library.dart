@@ -1,4 +1,5 @@
 import 'package:beatbox/screen/playlist_screen.dart';
+import 'package:beatbox/screen/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -177,7 +178,7 @@ class _UserPlaylistScreenState extends State<UserPlaylistScreen> {
               // Stay on current page
                 break;
               case 3:
-              // Navigate to Profile Screen (you can replace this with actual navigation)
+                Get.to(() => const ProfileScreen());
                 break;
             }
           },

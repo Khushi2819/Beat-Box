@@ -1,3 +1,4 @@
+import 'package:beatbox/screen/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/song_model.dart';
@@ -100,7 +101,7 @@ class _TrendingMusicScreenState extends State<TrendingMusicScreen> {
                 Get.to(() => const UserPlaylistScreen()); // Navigate to UserPlaylistScreen
                 break;
               case 3:
-              // Handle Profile navigation
+                Get.to(() => const ProfileScreen());
                 break;
             }
           },

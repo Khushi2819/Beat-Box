@@ -1,6 +1,9 @@
+import 'package:beatbox/models/MusicCollection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../models/Playlist_Controller.dart';
 import '../models/playlist_model.dart';
+import '../screen/playlist_screen.dart';
 
 class PlaylistCard extends StatelessWidget {
   const PlaylistCard({
@@ -12,9 +15,20 @@ class PlaylistCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Get.put(PlaylistController());
+    MusicCollection convertPlaylistToMusicCollection(Playlist playlist) {
+      return MusicCollection(
+        id:"12",
+        title: playlist.title,
+        songs: playlist.songs,
+        imageUrl: playlist.imageUrl,
+        userId:"23"
+      );
+    }
+
     return InkWell(
       onTap: () {
-        Get.toNamed('/playlist', arguments: playlist);
+        Get.to(() => PlaylistScreen(playlist:convertPlaylistToMusicCollection(playlist) ));
       },
       child: Container(
         height: 75,

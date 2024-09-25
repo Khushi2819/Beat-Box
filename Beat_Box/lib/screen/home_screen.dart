@@ -1,3 +1,4 @@
+import 'package:beatbox/screen/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/playlist_model.dart';
@@ -156,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Get.to(() => const UserPlaylistScreen());
                 break;
               case 3:
-              // Handle Profile navigation
+                Get.to(() => const ProfileScreen());
                 break;
             }
           },
