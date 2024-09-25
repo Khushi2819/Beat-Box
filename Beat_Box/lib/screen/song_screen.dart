@@ -62,20 +62,60 @@ class _SongScreenState extends State<SongScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Select a Playlist'),
-          content: SizedBox(
+          backgroundColor: Colors.deepPurple.shade800, // Set background color
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20), // Customize shape
+          ),
+          contentPadding: EdgeInsets.zero, // Remove default padding
+          content: Container(
             width: double.maxFinite,
-            child: ListView.builder(
-              itemCount: playlists.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(playlists[index].title),
-                  onTap: () {
-                    _addSongToPlaylist(playlists[index]);
-                    Navigator.pop(context); // Close the dialog
-                  },
-                );
-              },
+            height: 400, // Set a fixed height for the dialog box
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'Select a Playlist',
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: playlists.length,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                        leading: SizedBox(
+                          width: 50, // Set the image size
+                          height: 50,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              playlists[index].imageUrl ?? '', // Add image URL for the playlist
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                // Use a default playlist image if the URL fails or is null
+                                return Image.asset(
+                                  'assets/images/default_playlist.png', // Replace with your default image path
+                                  fit: BoxFit.cover,
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        title: Text(
+                          playlists[index].title,
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        onTap: () {
+                          _addSongToPlaylist(playlists[index]);
+                          Navigator.pop(context); // Close the dialog
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
         );
