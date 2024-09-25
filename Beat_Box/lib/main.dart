@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      home: HomeScreen(), // Show login page first
+      home: LoginPage(), // Show login page first
       getPages: [
         GetPage(name: '/home', page: () => const HomeScreen()),
         GetPage(name: '/login', page: () => const LoginPage()),
