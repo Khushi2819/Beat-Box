@@ -20,8 +20,7 @@ class MusicCollection {
   void addSong(Song song) {
     songs.insert(0, song);
     imageUrl = songs.first.coverUrl;
-    // Update Firestore entry if necessary.
-    updateFirestore();
+    updateFirestore(); // Update Firestore entry if necessary.
   }
 
   // Remove a song from the collection
@@ -32,8 +31,7 @@ class MusicCollection {
     } else {
       imageUrl = ''; // Optionally set a default image when empty.
     }
-    // Update Firestore entry if necessary.
-    updateFirestore();
+    updateFirestore(); // Update Firestore entry if necessary.
   }
 
   // Convert the MusicCollection object to a Map to store in Firestore
@@ -68,5 +66,10 @@ class MusicCollection {
   // Update the Firestore entry (if necessary)
   Future<void> updateFirestore() async {
     await FirebaseFirestore.instance.collection('playlists').doc(id).update(toMap());
+  }
+
+  // Delete the Firestore entry
+  Future<void> deleteFromFirestore() async {
+    await FirebaseFirestore.instance.collection('playlists').doc(id).delete();
   }
 }

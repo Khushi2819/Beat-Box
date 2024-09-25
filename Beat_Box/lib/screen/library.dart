@@ -52,7 +52,7 @@ class _UserPlaylistScreenState extends State<UserPlaylistScreen> {
         id: '', // Will be set after saving
         title: name,
         songs: [],
-        imageUrl: '',
+        imageUrl: 'https://firebasestorage.googleapis.com/v0/b/beat-e7c20.appspot.com/o/image%2Fplaylist.png?alt=media&token=ad97ea21-7cf9-4f1a-87aa-a9ff81da7dc7',
         userId: userId,
       );
 

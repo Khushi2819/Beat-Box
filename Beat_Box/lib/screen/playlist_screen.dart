@@ -1,14 +1,17 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../models/MusicCollection.dart';
+import '../models/Playlist_Controller.dart';
 import '../models/song_model.dart';
 
 class PlaylistScreen extends StatelessWidget {
   final MusicCollection playlist;
+  final PlaylistController playlistController; // Get instance of your PlaylistController
 
-  const PlaylistScreen({Key? key, required this.playlist}) : super(key: key);
+  PlaylistScreen({Key? key, required this.playlist})
+      : playlistController = Get.find<PlaylistController>(), // Remove 'const'
+        super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -68,12 +71,17 @@ class PlaylistScreen extends StatelessWidget {
     Get.defaultDialog(
       title: 'Delete Playlist',
       middleText: 'Are you sure you want to delete this playlist?',
-      onConfirm: () {
-        // Perform delete logic here
-        Get.back(); // Close the dialog
-        Get.snackbar('Success', 'Playlist deleted');
-        // Optionally navigate back after deleting
-        Get.back();
+      onConfirm: () async {
+        // Call the controller to delete the playlist from Firestore
+        try {
+          await playlistController.deletePlaylist(playlist); // Pass the entire playlist object
+          Get.back(); // Close the dialog
+          Get.snackbar('Success', 'Playlist deleted');
+          // Navigate back to the previous screen after deletion
+          Get.offAllNamed('/library'); // Replace '/playlistScreen' with your actual route name
+        } catch (error) {
+          Get.snackbar('Error', 'Failed to delete playlist: $error');
+        }
       },
       onCancel: () => Get.back(),
     );
@@ -167,11 +175,18 @@ class _PlaylistSongs extends StatelessWidget {
     );
   }
 
-  // Function to delete the song from the playlist
+  // Function to delete a song from the playlist
   void _deleteSongFromPlaylist(BuildContext context, MusicCollection playlist, Song song) {
-    playlist.songs.remove(song);
-    Get.snackbar('Success', '${song.title} deleted from playlist');
-    // Optionally, refresh UI after removing song
+    Get.defaultDialog(
+      title: 'Delete Song',
+      middleText: 'Are you sure you want to delete this song?',
+      onConfirm: () {
+        playlist.removeSong(song); // Call the remove song method
+        Get.back(); // Close the dialog
+        Get.snackbar('Success', 'Song deleted from playlist');
+      },
+      onCancel: () => Get.back(),
+    );
   }
 }
 
@@ -183,19 +198,28 @@ class _PlaylistInformation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(15.0),
-          child: playlist.songs.isNotEmpty
-              ? Image.network(
-            playlist.songs.first.coverUrl,
-            height: MediaQuery.of(context).size.height * 0.3,
-            width: MediaQuery.of(context).size.height * 0.3,
-            fit: BoxFit.cover,
-          )
-              : const Icon(Icons.music_note, size: 100),
+        Container(
+          height: 200,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: NetworkImage(playlist.imageUrl.isNotEmpty ? playlist.imageUrl : 'default_image_url'),
+              fit: BoxFit.cover,
+            ),
+            borderRadius: BorderRadius.circular(15),
+          ),
         ),
-        const SizedBox(height: 30),
+        const SizedBox(height: 10),
+        Text(
+          playlist.title,
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          '${playlist.songs.length} songs',
+          style: const TextStyle(fontSize: 16, color: Colors.white),
+        ),
       ],
     );
   }

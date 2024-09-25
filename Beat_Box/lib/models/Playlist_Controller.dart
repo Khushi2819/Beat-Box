@@ -24,4 +24,10 @@ class PlaylistController extends GetxController {
   void addSongToPlaylist(MusicCollection playlist, Song song) {
     playlist.addSong(song); // Update the playlist and Firestore
   }
+
+  // Method to delete a playlist locally and in Firestore
+  Future<void> deletePlaylist(MusicCollection playlist) async {
+    await playlist.deleteFromFirestore(); // Remove from Firestore
+    userPlaylists.remove(playlist); // Remove from local state
+  }
 }

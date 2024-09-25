@@ -47,11 +47,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<List<Playlist>> fetchPlaylists() async {
     List<Playlist> playlistList = [];
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    String? userId = FirebaseAuth.instance.currentUser?.uid;
 
     try {
-      QuerySnapshot snapshot = await firestore.collection('playlists').get();
+      QuerySnapshot snapshot = await firestore
+          .collection('playlists')
+          .where('userId', isEqualTo: userId)
+          .get();
       for (var doc in snapshot.docs) {
-        print('Document Data: ${doc.data()}'); // Debugging
         List<Song> songList = [];
 
         if (doc['songs'] is List) {
@@ -64,8 +67,6 @@ class _HomeScreenState extends State<HomeScreen> {
             );
             songList.add(song);
           }
-        } else {
-          print('Unexpected type for songs field: ${doc['songs']}');
         }
 
         Playlist playlist = Playlist(
@@ -89,7 +90,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> loadPlaylists() async {
-    userPlaylists = await fetchPlaylists(); // Load playlists here
+    userPlaylists = await fetchPlaylists();
+    setState(() {});
   }
 
   @override
@@ -102,10 +104,11 @@ class _HomeScreenState extends State<HomeScreen> {
   void _filterSongs(String query) {
     setState(() {
       searchQuery = query;
-      filteredSongs = songs.where((song) =>
+      filteredSongs = songs
+          .where((song) =>
       song.title.toLowerCase().contains(query.toLowerCase()) ||
-          song.description.toLowerCase().contains(query.toLowerCase())
-      ).toList();
+          song.description.toLowerCase().contains(query.toLowerCase()))
+          .toList();
     });
   }
 
@@ -114,6 +117,11 @@ class _HomeScreenState extends State<HomeScreen> {
     List<Song> displayedSongs = searchQuery.isEmpty
         ? filteredSongs.take(3).toList()
         : filteredSongs;
+
+    // Display only the last 3 playlists or fewer if available
+    List<Playlist> displayedPlaylists = userPlaylists.length > 3
+        ? userPlaylists.sublist(userPlaylists.length - 3)
+        : userPlaylists;
 
     return Container(
       decoration: BoxDecoration(
@@ -163,7 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.library_music_outlined),
-              label: 'Play',
+              label: 'Playlists',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.people_outline),
@@ -181,12 +189,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Text(
                       'Welcome',
-                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(color: Colors.white),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyLarge!
+                          .copyWith(color: Colors.white),
                     ),
                     const SizedBox(height: 5),
                     Text(
                       'Enjoy your favorite music',
-                      style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineSmall!
+                          .copyWith(
                           fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                     const SizedBox(height: 20),
@@ -197,8 +211,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         filled: true,
                         fillColor: Colors.white,
                         hintText: 'Search',
-                        hintStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(color: Colors.grey.shade400),
-                        prefixIcon: Icon(Icons.search, color: Colors.grey.shade400),
+                        hintStyle: Theme.of(context)
+                            .textTheme
+                            .bodyMedium!
+                            .copyWith(color: Colors.grey.shade400),
+                        prefixIcon: Icon(Icons.search,
+                            color: Colors.grey.shade400),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15.0),
                           borderSide: BorderSide.none,
@@ -208,10 +226,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 20),
                     Text(
                       'Trending Music',
-                      style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineSmall!
+                          .copyWith(
+                          fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                     const SizedBox(height: 20),
                     SizedBox(
@@ -228,15 +247,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     Padding(
                       padding: const EdgeInsets.all(20.0),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SectionHeader(title: 'Playlists'),
                           ListView.builder(
                             shrinkWrap: true,
                             padding: const EdgeInsets.only(top: 20),
                             physics: const NeverScrollableScrollPhysics(),
-                            itemCount: userPlaylists.length,
+                            itemCount: displayedPlaylists.length,
                             itemBuilder: (context, index) {
-                              return PlaylistCard(playlist: userPlaylists[index]);
+                              return PlaylistCard(
+                                  playlist: displayedPlaylists[index]);
                             },
                           ),
                         ],
