@@ -141,7 +141,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 } else {
                   return GestureDetector(
                     onTap: _showImageSourceDialog,
-                    child: CircularProgressIndicator()
+                    child: CircleAvatar(
+                      radius: 50,
+                      backgroundImage: AssetImage(
+                                  'Beat_Box/assets/icon/default_profile_photo.png'),
+                    ),
                   );
                 }
               },
