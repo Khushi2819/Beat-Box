@@ -3,6 +3,7 @@ import 'package:beatbox/screen/home_screen.dart';
 import 'package:beatbox/screen/library.dart';
 import 'package:beatbox/screen/login_screen.dart';
 import 'package:beatbox/screen/playlist_screen.dart';
+import 'package:beatbox/screen/profile_screen.dart';
 import 'package:beatbox/screen/signup_screen.dart';
 import 'package:beatbox/screen/song_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/song', page: () => const SongScreen()),
         GetPage(name: '/playlist', page: () => PlaylistScreen(playlist: Get.arguments)),
         GetPage(name: '/library', page: () =>  UserPlaylistScreen()),
+        GetPage(name: '/profile', page: () => ProfileScreen()),
       ],
     );
   }
