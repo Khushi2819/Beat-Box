@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import './profile_screen.dart';
+=======
+import 'package:beatbox/screen/profile_screen.dart';
+>>>>>>> 2eb8b6a0132e4f4acc8af5deba3098bba8966193
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/playlist_model.dart';
@@ -157,7 +161,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 Get.to(() => const UserPlaylistScreen());
                 break;
               case 3:
+<<<<<<< HEAD
                 Get.to(() => ProfileScreen());
+=======
+                Get.to(() => const ProfileScreen());
+>>>>>>> 2eb8b6a0132e4f4acc8af5deba3098bba8966193
                 break;
             }
           },
@@ -250,7 +258,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SectionHeader(title: 'Playlists'),
+                          SectionHeader(
+                            title: 'Playlists',
+                            onViewMoreTap: () {
+                              Get.to(() => const UserPlaylistScreen()); // Navigate to UserPlaylistScreen
+                            },
+                          ),
                           ListView.builder(
                             shrinkWrap: true,
                             padding: const EdgeInsets.only(top: 20),
