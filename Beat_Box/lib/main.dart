@@ -9,6 +9,7 @@ import 'package:beatbox/screen/song_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,11 +18,14 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginPage(), // Show login page first
+      home:  _auth.currentUser == null
+                ? LoginPage()
+                : HomeScreen(),
       getPages: [
         GetPage(name: '/home', page: () => const HomeScreen()),
         GetPage(name: '/login', page: () => const LoginPage()),

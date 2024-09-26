@@ -78,9 +78,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // Get the download URL to store in Firestore
         String imageUrl = await ref.getDownloadURL();
         await _firestore
-            .collection('users')
-            .doc(_auth.currentUser!.uid)
-            .update({'profileImageUrl': imageUrl});
+          .collection('users')
+          .doc(_auth.currentUser!.uid)
+          .set(
+            {'profileImageUrl': imageUrl},
+            SetOptions(merge: true), // Merge ensures only the profileImageUrl is updated or added
+          );
       }
     }
   }
