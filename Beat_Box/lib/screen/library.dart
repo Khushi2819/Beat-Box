@@ -118,12 +118,12 @@ class _UserPlaylistScreenState extends State<UserPlaylistScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () {
-              Get.back();
-            },
-          ),
+          // leading: IconButton(
+          //   icon: const Icon(Icons.arrow_back, color: Colors.white),
+          //   onPressed: () {
+          //     Get.back();
+          //   },
+          // ),
           title: const Text('Your Playlists', style: TextStyle(color: Colors.white)),
           actions: [
             IconButton(
@@ -178,7 +178,7 @@ class _UserPlaylistScreenState extends State<UserPlaylistScreen> {
               // Stay on current page
                 break;
               case 3:
-                Get.to(() => ProfileScreen());
+                Get.offAll(() => ProfileScreen());
                 break;
             }
           },

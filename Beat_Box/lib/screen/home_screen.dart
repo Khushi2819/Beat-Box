@@ -151,13 +151,13 @@ class _HomeScreenState extends State<HomeScreen> {
               // Handle Home navigation
                 break;
               case 1:
-                Get.to(() => const TrendingMusicScreen());
+                Get.offAll(() => const TrendingMusicScreen());
                 break;
               case 2:
-                Get.to(() => const UserPlaylistScreen());
+                Get.offAll(() => const UserPlaylistScreen());
                 break;
               case 3:
-                Get.to(() => ProfileScreen());
+                Get.offAll(() => ProfileScreen());
                 break;
             }
           },
@@ -287,16 +287,18 @@ class _CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: Colors.transparent,
-      elevation: 0,
-      leading: const Icon(Icons.grid_view_rounded, color: Colors.white),
-      actions: [
-        Container(
-          margin: const EdgeInsets.only(right: 20),
-          child: const CircleAvatar(
-            backgroundImage: AssetImage('assets/images/download.png'),
-          ),
-        ),
-      ],
+      centerTitle: true,
+      title: Text("BeatBox", style:TextStyle(color: Colors.white)),
+      // elevation: 0,
+      // leading: const Icon(Icons.grid_view_rounded, color: Colors.white),
+      // actions: [
+      //   Container(
+      //     margin: const EdgeInsets.only(right: 20),
+      //     child: const CircleAvatar(
+      //       backgroundImage: AssetImage('assets/images/download.png'),
+      //     ),
+      //   ),
+      // ],
     );
   }
 

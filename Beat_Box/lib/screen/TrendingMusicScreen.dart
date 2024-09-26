@@ -92,16 +92,16 @@ class _TrendingMusicScreenState extends State<TrendingMusicScreen> {
           onTap: (index) {
             switch (index) {
               case 0:
-                Get.to(() => const HomeScreen());
+                Get.offAll(() => const HomeScreen());
                 break;
-              case 1:
-                Get.to(() => const TrendingMusicScreen()); // Navigate to TrendingMusicScreen
+              case 1:// current page
+                // Get.offAll(() => const TrendingMusicScreen()); // Navigate to TrendingMusicScreen
                 break;
               case 2:
-                Get.to(() => const UserPlaylistScreen()); // Navigate to UserPlaylistScreen
+                Get.offAll(() => const UserPlaylistScreen()); // Navigate to UserPlaylistScreen
                 break;
               case 3:
-                Get.to(() => ProfileScreen());
+                Get.offAll(() => ProfileScreen());
                 break;
             }
           },
@@ -239,16 +239,18 @@ class _CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: Colors.transparent,
-      elevation: 0,
-      leading: const Icon(Icons.grid_view_rounded, color: Colors.white),
-      actions: [
-        Container(
-          margin: const EdgeInsets.only(right: 20),
-          child: const CircleAvatar(
-            backgroundImage: AssetImage('assets/images/download.png'),
-          ),
-        ),
-      ],
+      centerTitle: true,
+      title: Text("BeatBox", style:TextStyle(color: Colors.white)),
+      // elevation: 0,
+      // leading: const Icon(Icons.grid_view_rounded, color: Colors.white),
+      // actions: [
+      //   Container(
+      //     margin: const EdgeInsets.only(right: 20),
+      //     child: const CircleAvatar(
+      //       backgroundImage: AssetImage('assets/images/download.png'),
+      //     ),
+      //   ),
+      // ],
     );
   }
 

@@ -1,4 +1,8 @@
 import 'dart:io';
+import 'package:beatbox/screen/TrendingMusicScreen.dart';
+import 'package:beatbox/screen/home_screen.dart';
+import 'package:beatbox/screen/library.dart';
+
 import './login_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:get/get.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -112,69 +117,125 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Profile"),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.deepPurple.shade800.withOpacity(0.8),
+            Colors.deepPurple.shade200.withOpacity(0.8),
+          ],
+        ),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            StreamBuilder<DocumentSnapshot>(
-              stream: _firestore
-                  .collection('users')
-                  .doc(FirebaseAuth.instance.currentUser!.uid)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.hasData && snapshot.data!.exists) {
-                  var userData = snapshot.data!.data() as Map<String, dynamic>;
-                  String? profileImageUrl = userData['profileImageUrl'];
-
-                  return GestureDetector(
-                    onTap: _showImageSourceDialog,
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundImage: (profileImageUrl != null && profileImageUrl !="")
-                          ? NetworkImage(profileImageUrl)
-                          : AssetImage(
-                                  'BeatBox/assets/icons/default_profile_photo.png')
-                              as ImageProvider,
-                    ),
-                  );
-                } else {
-                  return GestureDetector(
-                    onTap: _showImageSourceDialog,
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundImage: AssetImage(
-                                  'Beat_Box/assets/icon/default_profile_photo.png'),
-                    ),
-                  );
-                }
-              },
-            ),
-            SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Email: ',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                ),
-                Text(
-                  _auth.currentUser?.email ??
-                      'No Email', // Display email from Firebase Auth
-                  style: TextStyle(fontSize: 16),
-                ),
-              ],
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _logout,
-              child: Text('Logout'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          title: Text("Profile", style: const TextStyle(color: Colors.white)),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              StreamBuilder<DocumentSnapshot>(
+                stream: _firestore
+                    .collection('users')
+                    .doc(FirebaseAuth.instance.currentUser!.uid)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData && snapshot.data!.exists) {
+                    var userData = snapshot.data!.data() as Map<String, dynamic>;
+                    String? profileImageUrl = userData['profileImageUrl'];
+      
+                    return GestureDetector(
+                      onTap: _showImageSourceDialog,
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundImage: (profileImageUrl != null && profileImageUrl !="")
+                            ? NetworkImage(profileImageUrl)
+                            : AssetImage(
+                                    'BeatBox/assets/icons/default_profile_photo.png')
+                                as ImageProvider,
+                      ),
+                    );
+                  } else {
+                    return GestureDetector(
+                      onTap: _showImageSourceDialog,
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundImage: AssetImage(
+                                    'Beat_Box/assets/icon/default_profile_photo.png'),
+                      ),
+                    );
+                  }
+                },
               ),
+              SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Email: ',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white),
+                  ),
+                  Text(
+                    _auth.currentUser?.email ??
+                        'No Email', //email from Firebase Auth
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _logout,
+                child: Text('Logout'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 253, 253, 253),
+                ),
+              ),
+            ],
+          ),
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.deepPurple.shade800,
+          unselectedItemColor: Colors.white70,
+          selectedItemColor: Colors.white,
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          currentIndex: 3, // Assuming 2 is the index for this screen
+          onTap: (index) {
+            switch (index) {
+              case 0:
+                Get.offAll(() => const HomeScreen());
+                break;
+              case 1:
+                Get.offAll(() => const TrendingMusicScreen());
+                break;
+              case 2:
+                Get.offAll(() => const UserPlaylistScreen());
+                break;
+              case 3:
+                break;
+            }
+          },
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.search),
+              label: 'Search',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.library_music_outlined),
+              label: 'Playlists',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.people_outline),
+              label: 'Profile',
             ),
           ],
         ),
