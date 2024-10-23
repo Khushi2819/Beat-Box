@@ -219,7 +219,8 @@ class CardPlay extends StatelessWidget {
     return Card(
       elevation: 5,
       margin: const EdgeInsets.symmetric(vertical: 10.0),
-      color: Colors.deepPurple.shade800, // Set background color to deep purple
+      color: Colors.deepPurple.shade800,
+      // Set background color to deep purple
       child: ListTile(
         leading: (playlist.songs.isNotEmpty && playlist.songs.first.coverUrl.isNotEmpty)
             ? Image.network(
@@ -227,8 +228,14 @@ class CardPlay extends StatelessWidget {
           fit: BoxFit.cover,
           width: 50,
           height: 50,
+
         )
-            : const Icon(Icons.music_note, size: 50, color: Colors.white), // Change icon color to white
+            : Image.network(
+          "https://firebasestorage.googleapis.com/v0/b/beat-e7c20.appspot.com/o/image%2Fplaylist.png?alt=media&token=ad97ea21-7cf9-4f1a-87aa-a9ff81da7dc7",
+          height: 50,
+          width: 50,
+          fit: BoxFit.cover,
+        ), // Change icon color to white
         title: Text(
           playlist.title,
           style: const TextStyle(

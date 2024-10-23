@@ -2,8 +2,10 @@ import 'package:beatbox/screen/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/song_model.dart';
-import 'home_screen.dart'; // Import HomeScreen
+import 'home_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:permission_handler/permission_handler.dart';
 
 import 'library.dart';
 
@@ -17,20 +19,20 @@ class TrendingMusicScreen extends StatefulWidget {
 class _TrendingMusicScreenState extends State<TrendingMusicScreen> {
   List<Song> songs = [];
   List<Song> filteredSongs = [];
+  stt.SpeechToText _speech = stt.SpeechToText();
+  bool _isListening = false;
+  String _voiceSearchText = '';
+  final TextEditingController _searchController = TextEditingController(); // Create a TextEditingController
 
   Future<List<Song>> fetchSongs() async {
     List<Song> songList = [];
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
-    print(1);
     try {
-      // Get the songs collection
       QuerySnapshot snapshot = await firestore.collection('songs').get();
-      // Map each document to the Song model
       for (var doc in snapshot.docs) {
-        print(doc);
         Song song = Song(
           title: doc['title'],
-          description: doc['description'] ?? "hii",
+          description: doc['description'] ?? "No description",
           url: doc['url'],
           coverUrl: doc['coverUrl'],
         );
@@ -39,30 +41,70 @@ class _TrendingMusicScreenState extends State<TrendingMusicScreen> {
     } catch (e) {
       print('Error fetching songs: $e');
     }
-    print(songList);
     return songList;
   }
 
   Future<void> loadSongs() async {
-    songs = await fetchSongs(); // Wait for the fetch to complete
+    songs = await fetchSongs();
     setState(() {
-      filteredSongs = songs; // Update filteredSongs here
+      filteredSongs = songs;
     });
   }
 
   @override
   void initState() {
     super.initState();
-    loadSongs(); // Call to load songs
+    loadSongs();
   }
 
   void _filterSongs(String query) {
     setState(() {
       filteredSongs = songs.where((song) =>
       song.title.toLowerCase().contains(query.toLowerCase()) ||
-          song.description.toLowerCase().contains(query.toLowerCase())
-      ).toList();
+          song.description.toLowerCase().contains(query.toLowerCase()))
+          .toList();
     });
+  }
+
+  Future<void> _startListening() async {
+    if (await Permission.microphone.request().isGranted) {
+      bool available = await _speech.initialize(
+        onStatus: (status) => setState(() {
+          _isListening = status == 'listening';
+        }),
+        onError: (error) => setState(() {
+          _isListening = false;
+          print('Speech recognition error: $error');
+        }),
+      );
+
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(onResult: (result) {
+          setState(() {
+            _voiceSearchText = result.recognizedWords;
+            _searchController.text = _voiceSearchText; // Update the TextEditingController text
+            _filterSongs(_voiceSearchText);
+          });
+        });
+      } else {
+        setState(() => _isListening = false);
+        print('Speech recognition is not available.');
+      }
+    } else {
+      print('Microphone permission not granted.');
+    }
+  }
+
+  void _stopListening() {
+    _speech.stop();
+    setState(() => _isListening = false);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose(); // Dispose of the controller when done
+    super.dispose();
   }
 
   @override
@@ -88,17 +130,16 @@ class _TrendingMusicScreenState extends State<TrendingMusicScreen> {
           selectedItemColor: Colors.white,
           showSelectedLabels: false,
           showUnselectedLabels: false,
-          currentIndex: 1, // Highlight the "Search" button
+          currentIndex: 1,
           onTap: (index) {
             switch (index) {
               case 0:
                 Get.offAll(() => const HomeScreen());
                 break;
-              case 1:// current page
-                // Get.offAll(() => const TrendingMusicScreen()); // Navigate to TrendingMusicScreen
+              case 1:
                 break;
               case 2:
-                Get.offAll(() => const UserPlaylistScreen()); // Navigate to UserPlaylistScreen
+                Get.offAll(() => const UserPlaylistScreen());
                 break;
               case 3:
                 Get.offAll(() => ProfileScreen());
@@ -139,6 +180,7 @@ class _TrendingMusicScreenState extends State<TrendingMusicScreen> {
                 ),
                 const SizedBox(height: 20),
                 TextFormField(
+                  controller: _searchController, // Set the controller
                   onChanged: (value) => _filterSongs(value),
                   decoration: InputDecoration(
                     isDense: true,
@@ -149,7 +191,10 @@ class _TrendingMusicScreenState extends State<TrendingMusicScreen> {
                         .textTheme
                         .bodyMedium!
                         .copyWith(color: Colors.grey.shade400),
-                    prefixIcon: Icon(Icons.search, color: Colors.grey.shade400),
+                    prefixIcon: IconButton(
+                      icon: Icon(Icons.mic, color: _isListening ? Colors.red : Colors.grey.shade400),
+                      onPressed: _isListening ? _stopListening : _startListening,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15.0),
                       borderSide: BorderSide.none,
@@ -176,7 +221,7 @@ class _TrendingMusicScreenState extends State<TrendingMusicScreen> {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(15.0),
                             child: Image.network(
-                              filteredSongs[index].coverUrl, // Use Image.network for URLs
+                              filteredSongs[index].coverUrl,
                               height: 75,
                               width: 75,
                               fit: BoxFit.cover,
@@ -240,17 +285,7 @@ class _CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: Colors.transparent,
       centerTitle: true,
-      title: Text("BeatBox", style:TextStyle(color: Colors.white)),
-      // elevation: 0,
-      // leading: const Icon(Icons.grid_view_rounded, color: Colors.white),
-      // actions: [
-      //   Container(
-      //     margin: const EdgeInsets.only(right: 20),
-      //     child: const CircleAvatar(
-      //       backgroundImage: AssetImage('assets/images/download.png'),
-      //     ),
-      //   ),
-      // ],
+      title: Text("BeatBox", style: TextStyle(color: Colors.white)),
     );
   }
 

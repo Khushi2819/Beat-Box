@@ -98,7 +98,7 @@ class _SongScreenState extends State<SongScreen> {
                               height: 50,
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
+                                child: playlists[index].imageUrl.isNotEmpty?Image.network(
                                   playlists[index].imageUrl ?? '', // Add image URL for the playlist
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {
@@ -108,6 +108,11 @@ class _SongScreenState extends State<SongScreen> {
                                       fit: BoxFit.cover,
                                     );
                                   },
+                                ):Image.network(
+                                  "https://firebasestorage.googleapis.com/v0/b/beat-e7c20.appspot.com/o/image%2Fplaylist.png?alt=media&token=ad97ea21-7cf9-4f1a-87aa-a9ff81da7dc7",
+                                  height: 50,
+                                  width: 50,
+                                  fit: BoxFit.cover,
                                 ),
                               ),
                             ),

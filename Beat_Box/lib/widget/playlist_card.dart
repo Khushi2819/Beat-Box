@@ -42,8 +42,13 @@ class PlaylistCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(15.0),
-              child: Image.network(
+              child: playlist.imageUrl.isNotEmpty?Image.network(
                 playlist.imageUrl,
+                height: 50,
+                width: 50,
+                fit: BoxFit.cover,
+              ):Image.network(
+                "https://firebasestorage.googleapis.com/v0/b/beat-e7c20.appspot.com/o/image%2Fplaylist.png?alt=media&token=ad97ea21-7cf9-4f1a-87aa-a9ff81da7dc7",
                 height: 50,
                 width: 50,
                 fit: BoxFit.cover,
