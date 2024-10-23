@@ -135,21 +135,34 @@ class _SongScreenState extends State<SongScreen> {
 
 
   Future<void> _addSongToPlaylist(MusicCollection playlist) async {
+    // Check if the song already exists in the playlist by comparing the URLs
+    bool songExists = playlist.songs.any((existingSong) => existingSong.url == song.url);
+
+    if (songExists) {
+      // Show an error message if the song already exists
+      Get.snackbar('Song not Added !', 'This song is already in the playlist');
+      return;
+    }
+
     // Add the song to the selected playlist
-    playlist.songs.add(song); // Assuming the song model can be added directly
-    if(playlist.songs.length == 1){
+    playlist.songs.add(song);
+
+    // Update playlist image if it's the first song
+    if (playlist.songs.length == 1) {
       await FirebaseFirestore.instance
           .collection('playlists')
-          .doc(playlist.id) // Use the playlist ID to update
-          .update({'imageUrl':song.coverUrl});
+          .doc(playlist.id)
+          .update({'imageUrl': song.coverUrl});
     }
+
+    // Update Firestore with the new playlist data
     await FirebaseFirestore.instance
         .collection('playlists')
-        .doc(playlist.id) // Use the playlist ID to update
+        .doc(playlist.id)
         .update({'songs': playlist.songs.map((s) => s.toMap()).toList()});
-
-
   }
+
+
 
 
   @override

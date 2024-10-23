@@ -199,7 +199,14 @@ class _PlaylistSongs extends StatelessWidget {
       title: 'Delete Song',
       middleText: 'Are you sure you want to delete this song?',
       onConfirm: () {
-        playlist.removeSong(song); // Call the remove song method
+        playlist.removeSong(song); // Remove the song
+        // If playlist becomes empty, set the image to a default
+        if (playlist.songs.isEmpty) {
+          playlist.imageUrl = 'default_image_url'; // Set to a default image URL
+        } else {
+          // If not empty, update the image to the first song's coverUrl
+          playlist.imageUrl = playlist.songs[0].coverUrl;
+        }
         Get.back(); // Close the dialog
         Get.snackbar('Success', 'Song deleted from playlist');
         refreshPlaylist(); // Refresh the playlist after deleting the song
@@ -207,6 +214,7 @@ class _PlaylistSongs extends StatelessWidget {
       onCancel: () => Get.back(),
     );
   }
+
 }
 
 class _PlaylistInformation extends StatelessWidget {
@@ -220,10 +228,13 @@ class _PlaylistInformation extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          height: 200,
+          height: 400,
           decoration: BoxDecoration(
             image: DecorationImage(
-              image: NetworkImage(playlist.imageUrl.isNotEmpty ? playlist.imageUrl : 'default_image_url'),
+              // Use default image if playlist is empty
+              image: NetworkImage(
+                playlist.imageUrl.isNotEmpty ? playlist.imageUrl : 'default_image_url',
+              ),
               fit: BoxFit.cover,
             ),
             borderRadius: BorderRadius.circular(15),

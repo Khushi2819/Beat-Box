@@ -83,7 +83,7 @@ class _TrendingMusicScreenState extends State<TrendingMusicScreen> {
         appBar: const _CustomAppBar(),
         bottomNavigationBar: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.deepPurple.shade600,
+          backgroundColor: Colors.deepPurple.shade800,
           unselectedItemColor: Colors.white70,
           selectedItemColor: Colors.white,
           showSelectedLabels: false,
